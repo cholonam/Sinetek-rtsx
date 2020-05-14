@@ -21,7 +21,7 @@
 #define _RTSXVAR_H_
 
 #if __APPLE__
-#include "openbsd/openbsd_compat.h"
+#include "compat/openbsd.h"
 #else
 #include <machine/bus.h>
 #endif // __APPLE__

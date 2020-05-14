@@ -22,7 +22,7 @@
  */
 
 #if __APPLE__
-#include "openbsd/openbsd_compat.h"
+#include "compat/openbsd.h"
 extern int Sinetek_rtsx_boot_arg_mimic_linux;
 #else // __APPLE__
 #include <sys/param.h>

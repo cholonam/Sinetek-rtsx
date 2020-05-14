@@ -19,7 +19,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #if __APPLE__
-#include "openbsd/openbsd_compat.h"
+#include "compat/openbsd.h"
 #else
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-#include "openbsd_compat.h"
+#include "openbsd.h"
 
 #include <sys/errno.h>
 

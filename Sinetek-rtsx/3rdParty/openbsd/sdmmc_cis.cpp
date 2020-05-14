@@ -19,7 +19,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #if __APPLE__
-#include "openbsd/openbsd_compat.h"
+#include "compat/openbsd.h"
 #else
 #include <sys/param.h>
 #include <sys/device.h>

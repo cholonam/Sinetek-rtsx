@@ -19,7 +19,7 @@
 /* Routines for SD I/O cards. */
 
 #if __APPLE__
-#include "openbsd/openbsd_compat.h"
+#include "compat/openbsd.h"
 #else // __APPLE__
 #include <sys/param.h>
 #include <sys/device.h>

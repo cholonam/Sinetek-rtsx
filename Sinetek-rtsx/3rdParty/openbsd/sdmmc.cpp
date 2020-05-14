@@ -23,7 +23,7 @@
  */
 
 #if __APPLE__
-#include "openbsd/openbsd_compat.h"
+#include "compat/openbsd.h"
 #else // _APPLE__
 #include <sys/param.h>
 #include <sys/device.h>

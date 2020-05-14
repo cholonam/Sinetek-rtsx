@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9319F491243081B600A4921E /* openbsd_compat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9319F48D243081B600A4921E /* openbsd_compat.cpp */; };
+		9319F491243081B600A4921E /* openbsd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9319F48D243081B600A4921E /* openbsd.cpp */; };
 		9319F492243081B600A4921E /* openbsd_compat_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9319F48E243081B600A4921E /* openbsd_compat_dma.cpp */; };
 		932FC7BF2431EFE700B1A5D0 /* openbsd_compat_config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 932FC7BD2431EFE700B1A5D0 /* openbsd_compat_config.cpp */; };
 		93348FA52435C2FD00F26905 /* openbsd_compat_spl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93348FA42435C2FD00F26905 /* openbsd_compat_spl.cpp */; };
@@ -27,7 +27,7 @@
 /* Begin PBXFileReference section */
 		9319F48B243081B600A4921E /* openbsd_compat_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_types.h; sourceTree = "<group>"; };
 		9319F48C243081B600A4921E /* openbsd_compat_dma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_dma.h; sourceTree = "<group>"; };
-		9319F48D243081B600A4921E /* openbsd_compat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd_compat.cpp; sourceTree = "<group>"; };
+		9319F48D243081B600A4921E /* openbsd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd.cpp; sourceTree = "<group>"; };
 		9319F48E243081B600A4921E /* openbsd_compat_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd_compat_dma.cpp; sourceTree = "<group>"; };
 		932FC7BD2431EFE700B1A5D0 /* openbsd_compat_config.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd_compat_config.cpp; sourceTree = "<group>"; };
 		932FC7BE2431EFE700B1A5D0 /* openbsd_compat_config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_config.h; sourceTree = "<group>"; };
@@ -40,7 +40,7 @@
 		9352ADD7243F1425001D1B21 /* openbsd_compat_rwlock.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd_compat_rwlock.cpp; sourceTree = "<group>"; };
 		9352ADD8243F1425001D1B21 /* openbsd_compat_rwlock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_rwlock.h; sourceTree = "<group>"; };
 		9355866F242211D600B8B0B9 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
-		93576F8524263CF3006F1A33 /* openbsd_compat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd_compat.h; sourceTree = "<group>"; };
+		93576F8524263CF3006F1A33 /* openbsd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd.h; sourceTree = "<group>"; };
 		935884C92421D21500E781A7 /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
 		93807803243383E00014C724 /* openbsd_compat_bus_space.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd_compat_bus_space.cpp; sourceTree = "<group>"; };
 		93807804243383E00014C724 /* openbsd_compat_bus_space.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_bus_space.h; sourceTree = "<group>"; };
@@ -96,10 +96,46 @@
 				93371E9E2435C52E004D5FFB /* openbsd_compat_tsleep.cpp */,
 				93371E9F2435C52E004D5FFB /* openbsd_compat_tsleep.h */,
 				9319F48B243081B600A4921E /* openbsd_compat_types.h */,
-				9319F48D243081B600A4921E /* openbsd_compat.cpp */,
-				93576F8524263CF3006F1A33 /* openbsd_compat.h */,
 			);
 			path = openbsd;
+			sourceTree = "<group>";
+		};
+		93989D74246D6434007B17DB /* 3rdParty */ = {
+			isa = PBXGroup;
+			children = (
+				93989D75246D6446007B17DB /* openbsd */,
+			);
+			path = 3rdParty;
+			sourceTree = "<group>";
+		};
+		93989D75246D6446007B17DB /* openbsd */ = {
+			isa = PBXGroup;
+			children = (
+				E811EB2A202D93B900049454 /* device.h */,
+				9E9EEDB71E4C6EC100E640DB /* rtsx.cpp */,
+				9E9EEDB51E4C6CAB00E640DB /* rtsxreg.h */,
+				9E9EEDB61E4C6D2400E640DB /* rtsxvar.h */,
+				9E9EEDBD1E4C869F00E640DB /* sdmmc_cis.cpp */,
+				9E9EEDC01E4C89FA00E640DB /* sdmmc_io.cpp */,
+				9E9EEDB91E4C723000E640DB /* sdmmc_ioreg.h */,
+				9E9EEDC21E4C927D00E640DB /* sdmmc_mem.cpp */,
+				9E9EEDC41E4C98AC00E640DB /* sdmmc.cpp */,
+				9E9EEDBA1E4C72D500E640DB /* sdmmcchip.h */,
+				9E9EEDBF1E4C86C800E640DB /* sdmmcdevs.h */,
+				9E9EEDBC1E4C73D200E640DB /* sdmmcreg.h */,
+				9E9EEDBB1E4C730D00E640DB /* sdmmcvar.h */,
+			);
+			path = openbsd;
+			sourceTree = "<group>";
+		};
+		93989D76246D694D007B17DB /* compat */ = {
+			isa = PBXGroup;
+			children = (
+				93576F8424263CC8006F1A33 /* openbsd */,
+				9319F48D243081B600A4921E /* openbsd.cpp */,
+				93576F8524263CF3006F1A33 /* openbsd.h */,
+			);
+			path = compat;
 			sourceTree = "<group>";
 		};
 		9E9EED9E1E4C65AD00E640DB = {
@@ -125,26 +161,14 @@
 		9E9EEDAA1E4C65AD00E640DB /* Sinetek-rtsx */ = {
 			isa = PBXGroup;
 			children = (
-				93576F8424263CC8006F1A33 /* openbsd */,
+				93989D74246D6434007B17DB /* 3rdParty */,
+				93989D76246D694D007B17DB /* compat */,
 				9E9EEDAF1E4C65AD00E640DB /* Info.plist */,
 				9E11DE571E4CB19C00AF36C8 /* SDDisk.cpp */,
 				9E11DE581E4CB19C00AF36C8 /* SDDisk.hpp */,
 				9E9EEDAD1E4C65AD00E640DB /* Sinetek_rtsx.cpp */,
 				9E9EEDAB1E4C65AD00E640DB /* Sinetek_rtsx.hpp */,
 				935884C92421D21500E781A7 /* util.h */,
-				E811EB2A202D93B900049454 /* device.h */,
-				9E9EEDB71E4C6EC100E640DB /* rtsx.cpp */,
-				9E9EEDB51E4C6CAB00E640DB /* rtsxreg.h */,
-				9E9EEDB61E4C6D2400E640DB /* rtsxvar.h */,
-				9E9EEDBD1E4C869F00E640DB /* sdmmc_cis.cpp */,
-				9E9EEDC01E4C89FA00E640DB /* sdmmc_io.cpp */,
-				9E9EEDB91E4C723000E640DB /* sdmmc_ioreg.h */,
-				9E9EEDC21E4C927D00E640DB /* sdmmc_mem.cpp */,
-				9E9EEDC41E4C98AC00E640DB /* sdmmc.cpp */,
-				9E9EEDBA1E4C72D500E640DB /* sdmmcchip.h */,
-				9E9EEDBF1E4C86C800E640DB /* sdmmcdevs.h */,
-				9E9EEDBC1E4C73D200E640DB /* sdmmcreg.h */,
-				9E9EEDBB1E4C730D00E640DB /* sdmmcvar.h */,
 			);
 			path = "Sinetek-rtsx";
 			sourceTree = "<group>";
@@ -230,7 +254,7 @@
 			files = (
 				9E9EEDC11E4C89FA00E640DB /* sdmmc_io.cpp in Sources */,
 				93348FA52435C2FD00F26905 /* openbsd_compat_spl.cpp in Sources */,
-				9319F491243081B600A4921E /* openbsd_compat.cpp in Sources */,
+				9319F491243081B600A4921E /* openbsd.cpp in Sources */,
 				9E11DE591E4CB19C00AF36C8 /* SDDisk.cpp in Sources */,
 				93807805243383E00014C724 /* openbsd_compat_bus_space.cpp in Sources */,
 				9E9EEDBE1E4C869F00E640DB /* sdmmc_cis.cpp in Sources */,
@@ -308,10 +332,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.13;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/Sinetek-rtsx";
 			};
 			name = Debug;
 		};
@@ -366,9 +391,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.13;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/Sinetek-rtsx";
 			};
 			name = Release;
 		};
