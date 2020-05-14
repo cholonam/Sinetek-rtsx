@@ -38,7 +38,6 @@ The code allows some customization by defining/undefining certain preprocessor m
 From higher to lower priority:
 
  - Make use of ADMA: This is enabled in OpenBSD, but has been disabled for now because it needs some changes in the compatibility layer (support for dma-maps with more than one segment).
- - Use `.c` extension for OpenBSD compilation units (instead of the current `.cpp`).
  - Fine-tune timeouts? (these may go away once power management is finished).
  - Use command gate instead of two workloops? Is it even possible?
  - Prevent namespace pollution (OpenBSD functions pollute the namespace and may cause collisions).
