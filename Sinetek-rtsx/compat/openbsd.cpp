@@ -3,6 +3,7 @@
 #include <sys/errno.h>
 
 #include "Sinetek_rtsx.hpp"
+#include "util.h" // UTL_CHK_PTR, UTL_ERR
 
 void *Sinetek_rtsx_openbsd_compat_owner = nullptr;
 

@@ -30,7 +30,8 @@ __END_DECLS
 #ifndef UTL_THIS_CLASS
 #define UTL_THIS_CLASS ""
 #endif
-#include "util.h"
+#include "util_chk.h"
+#include "util_logging.h"
 
 // disable execcisve logging from OpenBSD code
 #if OPENBSD_CODE_DEBUG
