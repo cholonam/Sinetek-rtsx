@@ -1,9 +1,9 @@
-#ifndef SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_RWLOCK_H
-#define SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_RWLOCK_H
+#ifndef SINETEK_RTSX_COMPAT_OPENBSD_RWLOCK_H
+#define SINETEK_RTSX_COMPAT_OPENBSD_RWLOCK_H
 
 #include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
 
-#include "openbsd_compat_types.h" // struct rwlock
+#include "types.h" // struct rwlock
 
 __BEGIN_DECLS
 
@@ -17,4 +17,4 @@ void rw_exit(struct rwlock *rwl);
 
 __END_DECLS
 
-#endif // SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_RWLOCK_H
+#endif // SINETEK_RTSX_COMPAT_OPENBSD_RWLOCK_H

@@ -1,4 +1,4 @@
-#include "openbsd_compat_dma.h"
+#include "dma.h"
 
 #include <libkern/OSAtomic.h> // OSSynchronizeIO
 #include <sys/errno.h>

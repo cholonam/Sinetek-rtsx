@@ -1,9 +1,9 @@
-#ifndef SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_DMA_H
-#define SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_DMA_H
+#ifndef SINETEK_RTSX_COMPAT_OPENBSD_DMA_H
+#define SINETEK_RTSX_COMPAT_OPENBSD_DMA_H
 
 #include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
 
-#include "openbsd_compat_types.h" // types
+#include "types.h" // types
 
 /*
  * Flags used in various bus DMA methods.
@@ -79,4 +79,4 @@ bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size);
 
 __END_DECLS
 
-#endif // SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_DMA_H
+#endif // SINETEK_RTSX_COMPAT_OPENBSD_DMA_H

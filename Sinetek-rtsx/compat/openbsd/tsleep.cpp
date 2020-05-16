@@ -1,10 +1,10 @@
-#include "openbsd_compat_tsleep.h"
+#include "tsleep.h"
 
 #include <sys/errno.h>
 #include <IOKit/IOLocks.h> // IORecursiveLock
 
 
-#include "openbsd_compat_spl.h" // Sinetek_rtsx_openbsd_compat_spl_getGlobalLock()
+#include "spl.h" // Sinetek_rtsx_openbsd_compat_spl_getGlobalLock()
 #define UTL_THIS_CLASS ""
 #include "util.h"
 

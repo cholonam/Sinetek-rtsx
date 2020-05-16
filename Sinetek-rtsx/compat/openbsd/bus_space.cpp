@@ -1,4 +1,4 @@
-#include "openbsd_compat_bus_space.h"
+#include "bus_space.h"
 
 #include <IOKit/IOMemoryDescriptor.h>
 

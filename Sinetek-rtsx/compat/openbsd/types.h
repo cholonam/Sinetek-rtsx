@@ -1,5 +1,5 @@
-#ifndef SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_TYPES_H
-#define SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_TYPES_H
+#ifndef SINETEK_RTSX_COMPAT_OPENBSD_TYPES_H
+#define SINETEK_RTSX_COMPAT_OPENBSD_TYPES_H
 
 #include <libkern/libkern.h> // size_t
 
@@ -47,4 +47,4 @@ typedef struct {
 	bus_dma_segment_t dm_segs[1];    /* segments; variable length */
 } bus_dmamap, *bus_dmamap_t;
 
-#endif /* SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_TYPES_H */
+#endif /* SINETEK_RTSX_COMPAT_OPENBSD_TYPES_H */

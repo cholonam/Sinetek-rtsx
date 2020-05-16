@@ -1,4 +1,4 @@
-#include "openbsd_compat_spl.h"
+#include "spl.h"
 
 #include <machine/machine_routines.h> // FALSE
 

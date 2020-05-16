@@ -20,7 +20,7 @@
 #define _SDMMC_CHIP_H_
 
 #if __APPLE__
-#include "openbsd_compat_types.h"
+#include "compat/openbsd/types.h"
 #else
 #include <machine/bus.h>
 #endif // __APPLE__

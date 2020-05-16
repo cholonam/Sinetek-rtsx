@@ -14,7 +14,7 @@
 #define super IOService
 OSDefineMetaClassAndStructors(Sinetek_rtsx, super);
 
-#include "openbsd_compat_config.h" // config_detach
+#include "compat/openbsd/config.h" // config_detach
 #include "rtsxreg.h"
 #include "rtsxvar.h" // rtsx_softc
 #include "SDDisk.hpp"

@@ -17,15 +17,15 @@ __END_DECLS
 // other headers from OpenBSD (they have to be at the end since they use types defined here
 #define _KERNEL // needed by some headers
 
-#include "openbsd/openbsd_compat_types.h" // type definitions (must be included before any other openbsd_compat*)
-#include "openbsd/openbsd_compat_bus_space.h" // bus_space_*
-#include "openbsd/openbsd_compat_config.h" // config_*
-#include "openbsd/openbsd_compat_dma.h" // DMA-related functions
-#include "openbsd/openbsd_compat_kthread.h" // kthread_*
-#include "openbsd/openbsd_compat_queue.h" // SIMPLEQ -> STAILQ
-#include "openbsd/openbsd_compat_rwlock.h" // rw_*
-#include "openbsd/openbsd_compat_spl.h" // spl*
-#include "openbsd/openbsd_compat_tsleep.h" // tsleep_nsec
+#include "openbsd/types.h" // type definitions (must be included before any other openbsd_compat*)
+#include "openbsd/bus_space.h" // bus_space_*
+#include "openbsd/config.h" // config_*
+#include "openbsd/dma.h" // DMA-related functions
+#include "openbsd/kthread.h" // kthread_*
+#include "openbsd/queue.h" // SIMPLEQ -> STAILQ
+#include "openbsd/rwlock.h" // rw_*
+#include "openbsd/spl.h" // spl*
+#include "openbsd/tsleep.h" // tsleep_nsec
 
 #ifndef UTL_THIS_CLASS
 #define UTL_THIS_CLASS ""

@@ -1,4 +1,4 @@
-#include "openbsd_compat_config.h"
+#include "config.h"
 
 #include <string.h> // strcmp
 #include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS

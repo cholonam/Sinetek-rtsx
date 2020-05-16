@@ -1,4 +1,4 @@
-#include "openbsd_compat_kthread.h"
+#include "kthread.h"
 
 #include <sys/errno.h> // E*
 #include <sys/types.h> // struct proc

@@ -1,4 +1,4 @@
-#include "openbsd_compat_rwlock.h"
+#include "rwlock.h"
 
 #include <machine/locks.h> // lck_rw_*
 #define UTL_THIS_CLASS ""
