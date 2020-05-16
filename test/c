@@ -47,5 +47,8 @@ elif [ -d "$KPATH2/$KEXT" ]; then
 	else
 		echo "Not copying (same or older kext)!"
 	fi
+else
+	echo "Kext not found!"
+	exit 1
 fi
 sudo chown -R root:wheel "$KEXT"
