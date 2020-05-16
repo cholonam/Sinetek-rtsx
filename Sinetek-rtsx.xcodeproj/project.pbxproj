@@ -44,7 +44,9 @@
 		935884C92421D21500E781A7 /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
 		93807803243383E00014C724 /* openbsd_compat_bus_space.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = openbsd_compat_bus_space.cpp; sourceTree = "<group>"; };
 		93807804243383E00014C724 /* openbsd_compat_bus_space.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_bus_space.h; sourceTree = "<group>"; };
+		93997812246F787400CCDADF /* util_logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util_logging.h; sourceTree = "<group>"; };
 		939C544424345486007E0DF6 /* openbsd_compat_spl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openbsd_compat_spl.h; sourceTree = "<group>"; };
+		93D7FD93246F7DB00087E84A /* util_chk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util_chk.h; sourceTree = "<group>"; };
 		9E11DE571E4CB19C00AF36C8 /* SDDisk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SDDisk.cpp; sourceTree = "<group>"; };
 		9E11DE581E4CB19C00AF36C8 /* SDDisk.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SDDisk.hpp; sourceTree = "<group>"; };
 		9E9EEDA81E4C65AD00E640DB /* Sinetek-rtsx.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Sinetek-rtsx.kext"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -169,6 +171,8 @@
 				9E9EEDAD1E4C65AD00E640DB /* Sinetek_rtsx.cpp */,
 				9E9EEDAB1E4C65AD00E640DB /* Sinetek_rtsx.hpp */,
 				935884C92421D21500E781A7 /* util.h */,
+				93D7FD93246F7DB00087E84A /* util_chk.h */,
+				93997812246F787400CCDADF /* util_logging.h */,
 			);
 			path = "Sinetek-rtsx";
 			sourceTree = "<group>";
