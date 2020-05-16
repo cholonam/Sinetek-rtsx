@@ -1,6 +1,7 @@
 #include "Sinetek_rtsx.hpp"
 
 #include <pexpert/pexpert.h> // PE_parse_boot_argn
+#include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
 
 #include <IOKit/IOLib.h>
 #include <IOKit/pci/IOPCIDevice.h>
@@ -23,8 +24,10 @@ OSDefineMetaClassAndStructors(Sinetek_rtsx, super);
 #include "util.h"
 
 // We need these functions, which are not declared in rtsxvar.h
+__BEGIN_DECLS
 int	rtsx_init(struct rtsx_softc *, int);
 void	rtsx_card_eject(struct rtsx_softc *);
+__END_DECLS
 
 //
 // syscl - define & enumerate power states

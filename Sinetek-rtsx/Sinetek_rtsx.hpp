@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdocumentation"
@@ -16,7 +17,9 @@
 #endif
 #include <IOKit/IOBufferMemoryDescriptor.h>
 
+__BEGIN_DECLS
 #include "sdmmcvar.h"
+__END_DECLS
 
 // forward declaration
 struct rtsx_softc;

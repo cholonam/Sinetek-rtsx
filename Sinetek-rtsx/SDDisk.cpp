@@ -1,3 +1,5 @@
+#include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
+
 #include <IOKit/IOLib.h>
 #include <IOKit/storage/IOBlockStorageDevice.h>
 #include <IOKit/IOMemoryDescriptor.h>
@@ -6,9 +8,11 @@
 
 #include "SDDisk.hpp"
 #include "Sinetek_rtsx.hpp"
+__BEGIN_DECLS
 #include "rtsxvar.h" // rtsx_softc
 #include "sdmmcvar.h" // sdmmc_mem_read_block
 #include "device.h"
+__END_DECLS
 
 #include "util.h"
 

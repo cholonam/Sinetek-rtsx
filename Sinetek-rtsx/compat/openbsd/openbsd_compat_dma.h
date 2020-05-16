@@ -1,6 +1,8 @@
 #ifndef SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_DMA_H
 #define SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_DMA_H
 
+#include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
+
 #include "openbsd_compat_types.h" // types
 
 /*
@@ -29,9 +31,7 @@
 #define BUS_DMASYNC_PREWRITE	0x04
 #define BUS_DMASYNC_POSTWRITE	0x08
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 extern bus_space_tag_t    gBusSpaceTag;
 
@@ -77,8 +77,6 @@ bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t siz
 void
 bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif // SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_DMA_H

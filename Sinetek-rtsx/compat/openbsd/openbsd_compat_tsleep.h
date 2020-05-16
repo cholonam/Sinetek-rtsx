@@ -1,6 +1,8 @@
 #ifndef SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_TSLEEP_H
 #define SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_TSLEEP_H
 
+#include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
+
 #define INFSLP 0xffffffffffffffffull
 #define NS_PER_SEC 1000000000ull
 
@@ -11,8 +13,12 @@
 
 typedef long long unsigned uint64_t; // required type
 
+__BEGIN_DECLS
+
 int tsleep_nsec(void *ident, int priority, const char *wmesg, uint64_t nsecs);
 
 int wakeup(void *ident);
+
+__END_DECLS
 
 #endif // SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_TSLEEP_H

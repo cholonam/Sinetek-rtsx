@@ -61,6 +61,7 @@ do { \
 
 static const int cold = 1;
 
+__BEGIN_DECLS
 #include "device.h"
 #include "sdmmc_ioreg.h"
 #include "sdmmcchip.h"
@@ -69,7 +70,7 @@ static const int cold = 1;
 #include "sdmmcvar.h"
 #include "rtsxreg.h"
 #include "rtsxvar.h"
-//#include "Sinetek_rtsx.hpp"
+__END_DECLS
 
 #define be32toh OSSwapBigToHostInt32
 #define betoh32 OSSwapBigToHostInt32
@@ -116,6 +117,8 @@ static inline void delay(unsigned int microseconds) {
 
 extern void *Sinetek_rtsx_openbsd_compat_owner;
 
+__BEGIN_DECLS
+
 /// Call the start function on the ::start() method of the main kext class
 int openbsd_compat_start(void *owner);
 
@@ -130,5 +133,7 @@ int sdmmc_scsi_attach(struct sdmmc_softc *sc);
 
 /// Should detach the block device (SDDisk)
 int sdmmc_scsi_detach(struct sdmmc_softc *sc);
+
+__END_DECLS
 
 #endif // SINETEK_RTSX_OPENBSD_OPENBSD_COMPAT_H

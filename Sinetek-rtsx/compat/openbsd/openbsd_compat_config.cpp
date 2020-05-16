@@ -1,10 +1,13 @@
 #include "openbsd_compat_config.h"
 
 #include <string.h> // strcmp
+#include <sys/cdefs.h> // __BEGIN_DECLS, __END_DECLS
 #include <sys/errno.h> // ENOTSUP
 #include <IOKit/IOLib.h> // IOMalloc, IOFree
 
+__BEGIN_DECLS
 #include "sdmmcvar.h" // sdmmc_attach_args, sdmmc_softc_original
+__END_DECLS
 
 #define UTL_THIS_CLASS ""
 #include "util.h" // UTL_CHK_PTR, UTL_ERR
