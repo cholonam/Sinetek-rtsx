@@ -139,10 +139,12 @@ bool Sinetek_rtsx::start(IOService *provider)
 	return true;
 ERROR:
 	workloop_ = NULL;
+#if RTSX_USE_IOLOCK
 	if (splsdmmc_rec_lock)
 		IORecursiveLockFree(splsdmmc_rec_lock);
 	if (intr_status_lock)
 		IOLockFree(intr_status_lock);
+#endif
 
 	UTL_DEBUG_FUN("END");
 	return false;
