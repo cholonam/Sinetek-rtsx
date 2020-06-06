@@ -13,9 +13,6 @@ struct MyArgStruct {
 	// OpenBSD parameters
 	void (*func)(void *);
 	void *arg;
-
-	// macOS thread
-	thread_t thread;
 };
 
 static void my_thread_continue(void *arg, wait_result_t wait_result)
@@ -23,10 +20,14 @@ static void my_thread_continue(void *arg, wait_result_t wait_result)
 	struct MyArgStruct *myArg = (struct MyArgStruct *) arg;
 
 	UTL_CHK_PTR(myArg,);
+	auto func = myArg->func;
+	auto func_arg = myArg->arg;
+	// we can now free myArg (no longer needed)
+	UTL_FREE(myArg, struct MyArgStruct);
 
 	UTL_DEBUG_DEF("Thread created (wait_result=%d), calling OpenBSD function...", (int) wait_result);
 	// Call OpenBSD thread
-	myArg->func(myArg->arg);
+	func(func_arg);
 	UTL_LOG("OpenBSD thread function returned!");
 	// call kthread_exit() ourselves
 	kthread_exit(0);
@@ -38,22 +39,26 @@ kthread_create(void (*func)(void *), void *arg, struct proc **newpp, const char 
 	int ret;
 
 	UTL_DEBUG_DEF("Creating new thread (name=%s)...", name);
-	auto myArg = UTL_MALLOC(struct MyArgStruct); // TODO: Where do we free this?
+	auto myArg = UTL_MALLOC(struct MyArgStruct);
 	UTL_CHK_PTR(myArg, ENOMEM);
 
 	myArg->func = func;
 	myArg->arg = arg;
 
-	ret = kernel_thread_start(my_thread_continue, myArg, &myArg->thread);
-	if (ret) {
+	thread_t new_thread;
+	ret = kernel_thread_start(my_thread_continue, myArg, &new_thread);
+	if (ret != KERN_SUCCESS) {
 		UTL_ERR("Error %d creating thread!", ret);
+		UTL_FREE(myArg, struct MyArgStruct);
+		return ret;
 	}
 #if defined(MAC_OS_X_VERSION_10_15) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_15
 	// set thread name (only Catalina and higher)
 	thread_set_thread_name(myArg->thread, name);
 #endif
 	if (newpp)
-		*newpp = (proc *) myArg->thread;
+		*newpp = (proc *) new_thread;
+	thread_deallocate(new_thread);
 	return 0;
 }
 
