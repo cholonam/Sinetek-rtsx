@@ -235,14 +235,14 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 	auto physAddr = memDesc->getPhysicalSegment(0, &len);
 	if (len != size || !physAddr) {
 		UTL_ERR("len=%d, size=%d, addr=" RTSX_PTR_FMT, (int) len, (int) size, RTSX_PTR_FMT_VAR(physAddr));
-		UTL_SAFE_RELEASE_NULL(memDesc);
+		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 		return ENOTSUP;
 	}
 	UTL_DEBUG_MEM("Allocated 0x%x bytes @ physical address 0x%04x", (int) len, (int) physAddr);
 
 	// call prepare here? does this wire the pages?
 	if (UTL_CHK_SUCCESS(memDesc->prepare(kIODirectionNone))) { // kIODirectionNone use descriptor's direction
-		UTL_SAFE_RELEASE_NULL(memDesc);
+		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 		return ENOMEM;
 	}
 
@@ -269,7 +269,8 @@ bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
 
 	// complete and release
 	memDesc->complete(kIODirectionInOut);
-	UTL_SAFE_RELEASE_NULL(memDesc);
+	UTL_DEBUG_MEM("Freeing memory @ physical address 0x%04x", (int) _segs[0].ds_addr);
+	UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 	UTL_DEBUG_FUN("END");
 }
 
@@ -322,7 +323,7 @@ bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
 	// release memory map
 	auto &memMap = segs[0]._ds_memMap;
 	UTL_CHK_PTR(memMap,);
-	UTL_SAFE_RELEASE_NULL(memMap);
+	UTL_SAFE_RELEASE_NULL_CHK(memMap, 1);
 	// remove from list
 	VA_SEGS::removeFromList(kva);
 	UTL_DEBUG_FUN("END");
