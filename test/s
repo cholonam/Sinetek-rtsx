@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEV="/dev/disk4"
+DEV="/dev/disk3"
 # 1 MiB
 NBYTES=$((1 * 1024 * 1024))
 
