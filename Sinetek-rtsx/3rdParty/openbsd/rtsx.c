@@ -452,7 +452,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 	if (!Sinetek_rtsx_boot_arg_mimic_linux || (sc->flags & RTSX_F_525A) == 0)
 		return 0;
 
-	// extra_init_hw
+	// rts5249_extra_init_hw
 
 	/* Rest L1SUB Config */
 	RTSX_WRITE(sc, 0xfe8f, 0x00); // L1SUB_CONFIG3
@@ -493,6 +493,19 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_PETXCFG, 0x80, 0x80));
 	} else {
 		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_PETXCFG, 0x80, 0x00));
+	}
+
+	// rts525a_extra_init_hw
+
+	UTL_CHK_SUCCESS(rtsx_write(sc, 0xFE55, 0x20, 0x20));
+	if (sc->flags & RTSX_F_525A_TYPE_A) {
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFE8E, 0x02, 0x02));
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF6C, 0x38, 0x28));
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF75, 0x07, 0x03));
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF76, 0x07, 0x04));
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF77, 0x07, 0x04));
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF72, 0x30, 0x10));
+		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF6E, 0x9F, 0x89));
 	}
 #endif
 
