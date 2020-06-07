@@ -322,14 +322,20 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 	}
 #if __APPLE__
 	else if (sc->flags & RTSX_F_525A) {
-		RTSX_READ(sc, RTSX_DUMMY_REG, &version);
-		if ((version & 0x0F) < 4) {
-			UTL_LOG("Chip 525A version %c found", 'A' + (version & 0x0F));
-		} else {
-			UTL_ERR("Chip 525A version unknown (%d)", (version & 0x0F));
+		/* Bug: When RTSX_DUMMY_REG is read more than once, it seems it may return 0x00 after the first time.
+		 *      Therefore, we use a static variable to make sure we only read it once. */
+		static bool read = false;
+		if (!read) {
+			read = true;
+			RTSX_READ(sc, RTSX_DUMMY_REG, &version);
+			if ((version & 0x0F) < 4) {
+				UTL_LOG("Chip 525A version %c found", 'A' + (version & 0x0F));
+			} else {
+				UTL_ERR("Chip 525A version unknown (%d)", (version & 0x0F));
+			}
+			if ((version & 0x0F) == RTSX_IC_VERSION_A)
+				sc->flags |= RTSX_F_525A_TYPE_A;
 		}
-		if ((version & 0x0F) == RTSX_IC_VERSION_A)
-			sc->flags |= RTSX_F_525A_TYPE_A;
 	}
 #endif /* __APPLE__ */
 
