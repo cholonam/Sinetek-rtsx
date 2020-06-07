@@ -860,13 +860,22 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 #if __APPLE__
 	if (cmd->c_error) {
+		char *ok_msg = "";
+		if (cmd->c_error == ETIMEDOUT &&
+		    (cmd->c_opcode == 2 ||
+		     cmd->c_opcode == 5 ||
+		     cmd->c_opcode == 52)) {
+			// those commands may give timeouts if they are not supported
+			ok_msg = " (OK)";
+		}
 		UTL_ERR("%s: cmd %u (%s) arg=%#x data=%p dlen=%d flags=%#x proc=\"%s\" "
-			"(error %d)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
-			cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "", cmd->c_error);
+			"(error %d%s)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
+			cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "", cmd->c_error,
+			ok_msg);
 	} else {
 		UTL_DEBUG_CMD("%s: cmd %u (%s) arg=%#x data=%p dlen=%d flags=%#x proc=\"%s\" "
-			      "(error %d)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
-			      cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "", cmd->c_error);
+			      "(OK)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
+			      cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "");
 	}
 #else
 	DPRINTF(1,("%s: cmd %u arg=%#x data=%p dlen=%d flags=%#x "

@@ -323,11 +323,10 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 #if __APPLE__
 	else if (sc->flags & RTSX_F_525A) {
 		RTSX_READ(sc, RTSX_DUMMY_REG, &version);
-		version &= 0x0f;
-		if (version < 4) {
-			UTL_DEBUG_DEF("Chip version %c found", 'A' + version);
+		if ((version & 0x0F) < 4) {
+			UTL_LOG("Chip 525A version %c found", 'A' + (version & 0x0F));
 		} else {
-			UTL_ERR("Chip version unknown (%d)", version);
+			UTL_ERR("Chip 525A version unknown (%d)", (version & 0x0F));
 		}
 		if ((version & 0x0F) == RTSX_IC_VERSION_A)
 			sc->flags |= RTSX_F_525A_TYPE_A;
