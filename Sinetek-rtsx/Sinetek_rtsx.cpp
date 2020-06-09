@@ -176,6 +176,25 @@ void Sinetek_rtsx::trampoline_intr(OSObject *ih, IOInterruptEventSource *ies, in
 		UTL_ERR("Object received is not a Sinetek_rtsx!");
 }
 
+// From https://developer.apple.com/library/archive/documentation/HardwareDrivers/Conceptual/ThunderboltDevGuide/Basics02/Basics02.html
+static int findMSI(IOPCIDevice *provider) {
+	int index  = 0;
+	int source = 0;
+	for (index = 0; ; index++) {
+		IOReturn result   = kIOReturnSuccess;
+		int interruptType = 0;
+
+		result = provider->getInterruptType (index, &interruptType);
+		if (result != kIOReturnSuccess)
+			return -1;
+		if (interruptType & kIOInterruptTypePCIMessaged) {
+			source = index;
+			UTL_LOG("MSI interrupt found at index %d", index);
+			return index;
+		}
+	}
+}
+
 // This method is called only from start()
 void Sinetek_rtsx::rtsx_pci_attach()
 {
@@ -209,10 +228,14 @@ void Sinetek_rtsx::rtsx_pci_attach()
 	}
 
 	/* Map device interrupt. */
+	int intIndex = findMSI(provider_);
+	if (intIndex < 0)
+		intIndex = 0; // no MSI found -> use default index
 #if RTSX_USE_IOFIES
-	intr_source_ = IOFilterInterruptEventSource::filterInterruptEventSource(this, trampoline_intr, is_my_interrupt, provider_);
+	intr_source_ = IOFilterInterruptEventSource::filterInterruptEventSource(this, trampoline_intr, is_my_interrupt,
+										provider_, intIndex);
 #else // RTSX_USE_IOFIES
-	intr_source_ = IOInterruptEventSource::interruptEventSource(this, trampoline_intr, provider_);
+	intr_source_ = IOInterruptEventSource::interruptEventSource(this, trampoline_intr, provider_, intIndex);
 #endif // RTSX_USE_IOFIES
 	if (!intr_source_)
 	{
