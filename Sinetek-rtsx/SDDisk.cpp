@@ -30,6 +30,36 @@ OSDefineMetaClassAndStructors(SDDisk, IOBlockStorageDevice)
 /// IOBlockStorageDriver, because it's not the same (IOATABlockStorageDriver is the provider of IOATABlockStorageDriver,
 /// but IOBlockStorageDriver is the CLIENT of IOBlockStorageDevice). This one DOES forward doAsyncReadWrite.
 
+#if RTSX_USE_ADMA
+namespace {
+
+static void *dma_alloc(bus_size_t size, bus_dma_segment_t *dma_segs, int nsegs, int *rsegs, int flags)
+{
+	int error;
+	error = bus_dmamem_alloc(gBusDmaTag, size, 0, 0, dma_segs, nsegs, rsegs, flags);
+	if (error) {
+		UTL_ERR("bus_dmamem_alloc failed with error %d", error);
+		return nullptr;
+	}
+	void *ret;
+	error = bus_dmamem_map(gBusDmaTag, dma_segs, *rsegs, size, (caddr_t *)&ret, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	if (error) {
+		UTL_ERR("bus_dmamem_map failed with error %d", error);
+		bus_dmamem_free(gBusDmaTag, dma_segs, *rsegs);
+		return nullptr;
+	}
+	return ret;
+}
+
+static void dma_free(void *kva, bus_size_t bufSize, bus_dma_segment_t *dma_segs, int rsegs)
+{
+	bus_dmamem_unmap(gBusDmaTag, kva, bufSize);
+	bus_dmamem_free(gBusDmaTag, dma_segs, rsegs);
+}
+
+} // namespace
+#endif // RTSX_USE_ADMA
+
 bool SDDisk::init(struct sdmmc_softc *sc_sdmmc, OSDictionary* properties)
 {
 	UTL_DEBUG_FUN("START");
@@ -247,7 +277,6 @@ IOReturn SDDisk::setWriteCacheState(bool enabled)
 	return kIOReturnUnsupported;
 }
 
-
 struct BioArgs
 {
 	IOMemoryDescriptor *buffer;
@@ -287,14 +316,32 @@ void read_task_impl_(void *_args)
 	IOByteCount remainingBytes = args->nblks * 512;
 	IOByteCount sentBytes = 0;
 	int blocks = (int) args->block;
-
 #if RTSX_USE_WRITEBYTES
+#if RTSX_USE_ADMA
+	// Since the 'args->buffer' IOMemoryDescriptor that we receive may have it's physical pages in the >4GB memory,
+	// we need to copy it to a new buffer allocated using OpenBSD dma functions. This way we can obtain a
+	// scatter/gather list from it with addresses below 4GB.
+	bus_dma_segment_t dma_segs[SDMMC_MAXNSEGS];
+	int               rsegs;
+	u_char *          buf;
+
+	buf = (u_char *)dma_alloc(actualByteCount, dma_segs, SDMMC_MAXNSEGS, &rsegs,
+				  args->direction == kIODirectionIn ? BUS_DMA_READ : BUS_DMA_WRITE);
+	if (!buf) {
+		if (args->completion.action) {
+			(args->completion.action)(args->completion.target, args->completion.parameter,
+						  kIOReturnNoMemory, actualByteCount);
+		}
+		delete args;
+		UTL_DEBUG_FUN("END (dma_alloc failed)");
+	}
+#else
 	u_char *buf = new u_char[actualByteCount];
+#endif
 #else
 	IOMemoryMap *map = args->buffer->map();
 	u_char *buf = (u_char *) map->getAddress();
 #endif
-
 	while (remainingBytes > 0) {
 		IOByteCount sendByteCount = remainingBytes > maxSendBytes ? maxSendBytes : remainingBytes;
 
@@ -326,7 +373,11 @@ void read_task_impl_(void *_args)
 		sentBytes += sendByteCount;
 	}
 #if RTSX_USE_WRITEBYTES
+#if RTSX_USE_ADMA
+	dma_free(buf, actualByteCount, dma_segs, rsegs);
+#else
 	delete[] buf;
+#endif
 #else
 	UTL_SAFE_RELEASE_NULL_CHK(map, 2); // because buffer is holding a reference
 #endif
@@ -351,7 +402,6 @@ void read_task_impl_(void *_args)
 	delete args;
 	UTL_DEBUG_FUN("END (error = %d)", error);
 }
-
 
 /**
  * Start an async read or write operation.

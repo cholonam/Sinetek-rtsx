@@ -1,0 +1,14 @@
+{
+	"editor.detectIndentation": false,
+	"editor.formatOnSave": true,
+	"editor.insertSpaces": false,
+	"editor.tabSize": 8,
+	"editor.wordWrapColumn": 120,
+
+	"#### clang-format plugin has been disabled": 0,
+	"clang-format.style": "file",
+
+	"editor.defaultFormatter": "Gruntfuggly.format-modified",
+	"####format-modified.debug": true,
+	"format-modified.formatWholeDocumentOnFailure": false,
+}
