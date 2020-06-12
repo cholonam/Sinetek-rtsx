@@ -1,0 +1,24 @@
+﻿BasedOnStyle: LLVM
+AlignConsecutiveMacros: true
+# Commented out because does not work well with PointerAlignment:Right
+AlignConsecutiveDeclarations: true
+AlignEscapedNewlines: DontAlign
+AllowShortFunctionsOnASingleLine: Inline
+AccessModifierOffset: -8
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+ColumnLimit: 120
+ContinuationIndentWidth: 8 # Used sometimes when lines are too long
+IndentWidth: 8
+# int *p;
+DerivePointerAlignment: false
+PointerAlignment: Right
+
+# BracedList (and struct initializators!)
+Cpp11BracedListStyle: false       # true: Struct s = {0}; | false: Struct s = { 0 };
+SpaceBeforeCpp11BracedList: false # true: int a {0};      | false: int a{0};
+
+TabWidth: 8
+# I prefer ForIndentation, but use ForContinuationAndIndentation for consistency with Xcode
+UseTab: ForContinuationAndIndentation
