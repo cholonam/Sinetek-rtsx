@@ -32,6 +32,7 @@
 		932FC7BD2431EFE700B1A5D0 /* config.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = config.cpp; sourceTree = "<group>"; };
 		932FC7BE2431EFE700B1A5D0 /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		932FC7C12432230000B1A5D0 /* queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = queue.h; sourceTree = "<group>"; };
+		93310F92249351D500E24DC3 /* util_dict.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util_dict.h; sourceTree = "<group>"; };
 		93348FA42435C2FD00F26905 /* spl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = spl.cpp; sourceTree = "<group>"; };
 		93371E9E2435C52E004D5FFB /* tsleep.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tsleep.cpp; sourceTree = "<group>"; };
 		93371E9F2435C52E004D5FFB /* tsleep.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tsleep.h; sourceTree = "<group>"; };
@@ -172,6 +173,7 @@
 				9E9EEDAB1E4C65AD00E640DB /* Sinetek_rtsx.hpp */,
 				935884C92421D21500E781A7 /* util.h */,
 				93D7FD93246F7DB00087E84A /* util_chk.h */,
+				93310F92249351D500E24DC3 /* util_dict.h */,
 				93997812246F787400CCDADF /* util_logging.h */,
 			);
 			path = "Sinetek-rtsx";

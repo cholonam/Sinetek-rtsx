@@ -8,9 +8,11 @@
 #include <IOKit/IOMemoryDescriptor.h> // IOMemoryDescriptor
 #endif
 
-#include "util_logging.h"
 #include "util_chk.h"
-
+#include "util_logging.h"
+#if __cplusplus
+#include "util_dict.h"
+#endif
 #pragma mark -
 #pragma mark Memory functions
 

@@ -30,77 +30,8 @@ bus_space_tag_t gBusSpaceTag = {};
 bus_dma_tag_t gBusDmaTag = (bus_dma_tag_t) &_busDmaTag;
 
 // class to keep track of the segments belonging to a virtual address
-class VA_SEGS {
-	static constexpr auto ARRAY_SIZE = 10;
-	static void *lastVAddr[ARRAY_SIZE];
-	static _bus_dma_segment_t *lastSegs[ARRAY_SIZE];
-
-	// returns -1 if no slots available
-	static int getFreeSlot() {
-		for (auto i = 0; i < ARRAY_SIZE; i++) {
-			if (lastVAddr[i] == nullptr) {
-				lastVAddr[i] = (void *) -1; // mark as used
-				return i;
-			}
-		}
-		return -1; // no free slots
-	}
-
-	// returns -1 if not found
-	static int findVAddr(void *virtAddr) {
-		for (auto i =0; i < ARRAY_SIZE; i++) {
-			if (lastVAddr[i] == virtAddr) return i;
-		}
-		return -1;
-	}
-
-public:
-	// Update the list of virtual addres/segment (should keep track of all of them, but for now we only support one)
-	static int addToList(void *virtAddr, _bus_dma_segment_t *segs) {
-		UTL_DEBUG_FUN("START (virtAddr = " RTSX_PTR_FMT ")", RTSX_PTR_FMT_VAR(virtAddr));
-
-		auto slotIdx = getFreeSlot();
-		if (slotIdx < 0) {
-			UTL_ERR("No free slots");
-			return ENOMEM;
-		}
-		lastVAddr[slotIdx] = virtAddr;
-		lastSegs[slotIdx] = segs;
-		UTL_DEBUG_FUN("END");
-		return 0;
-	}
-
-	static int removeFromList(void *virtAddr) {
-		UTL_DEBUG_FUN("START (virtAddr = " RTSX_PTR_FMT ")", RTSX_PTR_FMT_VAR(virtAddr));
-		auto slotIdx = findVAddr(virtAddr);
-		if (slotIdx < 0) {
-			UTL_ERR("Virtual address not found (" RTSX_PTR_FMT ")", RTSX_PTR_FMT_VAR(virtAddr));
-			return EINVAL;
-		}
-		lastVAddr[slotIdx] = nullptr;
-		lastSegs[slotIdx] = nullptr;
-		UTL_DEBUG_FUN("END");
-		return 0;
-	}
-
-	static int getSegsFromList(void *virtAddr, _bus_dma_segment_t **outSegs) {
-		UTL_DEBUG_FUN("START (virtAddr = " RTSX_PTR_FMT ")", RTSX_PTR_FMT_VAR(virtAddr));
-		auto slotIdx = findVAddr(virtAddr);
-		if (slotIdx < 0) {
-			UTL_ERR("Virtual address not found (" RTSX_PTR_FMT ")", RTSX_PTR_FMT_VAR(virtAddr));
-			return EINVAL;
-		}
-		*outSegs = lastSegs[slotIdx];
-		UTL_DEBUG_FUN("END");
-		return 0;
-	}
-};
-
-void *VA_SEGS::lastVAddr[] = { nullptr };
-_bus_dma_segment_t *VA_SEGS::lastSegs[] = { nullptr };
-
-
-
+typedef StaticDictionary<void *, _bus_dma_segment_t *> VA_SEGS;
+UTL_STATIC_DICT_INIT(VA_SEGS);
 
 // bus_dmamap_create();         /* get a dmamap to load/unload          */
 // for each DMA xfer {
@@ -171,7 +102,7 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 	}
 
 	_bus_dma_segment_t *segs;
-	if (VA_SEGS::getSegsFromList(buf, &segs)) {
+	if (VA_SEGS::getValueFromList(buf, &segs)) {
 		UTL_ERR("Could not get segments from virtual address!");
 		return ENOTSUP;
 	}
@@ -316,7 +247,7 @@ bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
 {
 	UTL_DEBUG_FUN("START");
 	_bus_dma_segment_t *segs;
-	if (VA_SEGS::getSegsFromList(kva, &segs)) {
+	if (VA_SEGS::getValueFromList(kva, &segs)) {
 		UTL_ERR("Could not get segments from virtual address!");
 		return;
 	}
