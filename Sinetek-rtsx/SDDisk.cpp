@@ -291,7 +291,7 @@ void read_task_impl_(void *_args)
 #if RTSX_USE_WRITEBYTES
 	u_char *buf = new u_char[actualByteCount];
 #else
-	auto map = args->buffer->map();
+	IOMemoryMap *map = args->buffer->map();
 	u_char *buf = (u_char *) map->getAddress();
 #endif
 
@@ -328,7 +328,7 @@ void read_task_impl_(void *_args)
 #if RTSX_USE_WRITEBYTES
 	delete[] buf;
 #else
-	map->release();
+	UTL_SAFE_RELEASE_NULL_CHK(map, 2); // because buffer is holding a reference
 #endif
 	if (args->completion.action) {
 		if (error == 0) {
@@ -393,8 +393,7 @@ IOReturn SDDisk::doAsyncReadWrite(IOMemoryDescriptor *buffer,
 	if ((direction != kIODirectionIn) && (direction != kIODirectionOut))
 		return kIOReturnBadArgument;
 
-	// printf("=====================================================\n");
-	UTL_DEBUG_DEF("START (block=%d nblks=%d)", (int) block, (int) nblks);
+	UTL_DEBUG_DEF("START (block=%llu nblks=%llu bufferFlags=0x%llx)", block, nblks, buffer->getFlags());
 
 	/*
 	 * Copy things over as we're going to lose the parameters once this

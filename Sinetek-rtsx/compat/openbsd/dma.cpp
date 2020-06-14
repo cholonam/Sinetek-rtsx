@@ -15,22 +15,12 @@ typedef struct {
 	// IOMemoryMap              *memoryMap;
 } _bus_dma_tag;
 
-// This struct MUST match bus_dma_segment_t
-typedef struct {
-	uint64_t			ds_addr;
-	uint64_t			ds_len;
-	// We store the IOMemoryDescriptor and IOMemoryMap here because we have no other place to store them.
-	// They are store only in the first element of segs (we only support one segment anyway).
-	IOBufferMemoryDescriptor *	_ds_memDesc;
-	IOMemoryMap *			_ds_memMap;
-} _bus_dma_segment_t;
-
 _bus_dma_tag _busDmaTag = {};
 bus_space_tag_t gBusSpaceTag = {};
 bus_dma_tag_t gBusDmaTag = (bus_dma_tag_t) &_busDmaTag;
 
-// class to keep track of the segments belonging to a virtual address
-typedef StaticDictionary<void *, _bus_dma_segment_t *> VA_SEGS;
+/// class to keep track of the segments belonging to a virtual address
+typedef StaticDictionary<void *, bus_dma_segment_t *> VA_SEGS;
 UTL_STATIC_DICT_INIT(VA_SEGS);
 
 // bus_dmamap_create();         /* get a dmamap to load/unload          */
@@ -58,18 +48,18 @@ UTL_STATIC_DICT_INIT(VA_SEGS);
 // }
 // bus_dmamap_destroy();        /* release any resources used by dmamap */
 
+// See: https://github.com/openbsd/src/blob/master/sys/arch/amd64/amd64/bus_dma.c
+
 int
 bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 		  bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	UTL_DEBUG_FUN("START");
-	if (nsegments != 1) {
-		UTL_ERR("Only one single segment supported for now");
-		return ENOTSUP;
-	}
+	UTL_DEBUG_FUN("START (nsegments=%d maxsegsz=%lu boundary=%lu flags=%d", nsegments, maxsegsz, boundary, flags);
 	UTL_CHK_PTR(dmamp, EINVAL);
 
-	bus_dmamap_t ret = UTL_MALLOC(bus_dmamap);
+	size_t mapsize = sizeof(struct bus_dmamap) + sizeof(bus_dma_segment_t) * (nsegments - 1);
+
+	bus_dmamap_t ret = (bus_dmamap_t)IOMalloc(mapsize);
 	UTL_CHK_PTR(ret, ENOMEM);
 
 	bzero(ret, sizeof(bus_dmamap));
@@ -88,7 +78,9 @@ void
 bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmamp)
 {
 	UTL_DEBUG_FUN("START");
-	UTL_FREE(dmamp, _bus_dmamap);
+	UTL_CHK_PTR(dmamp, );
+	size_t mapsize = sizeof(struct bus_dmamap) + sizeof(bus_dma_segment_t) * (dmamp->_dm_segcnt - 1);
+	IOFree(dmamp, mapsize);
 	UTL_DEBUG_FUN("END");
 }
 
@@ -97,23 +89,28 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 {
 	UTL_DEBUG_FUN("START");
 	UTL_CHK_PTR(dmam, EINVAL);
+	UTL_CHK_PTR(buf, EINVAL);
 	if (p != nullptr) {
 		return ENOTSUP; // only kernel space supported
 	}
 
-	_bus_dma_segment_t *segs;
+	IOMemoryDescriptor *md;
+	IOMemoryMap *       mmap;
+	bus_dma_segment_t *segs;
 	if (VA_SEGS::getValueFromList(buf, &segs)) {
 		UTL_ERR("Could not get segments from virtual address!");
 		return ENOTSUP;
 	}
+	md = segs[0]._ds_memDesc;
+	mmap = segs[0]._ds_memMap;
 
 	// load segment information into dmam:
-	dmam->dm_mapsize = dmam->_dm_size;
+	dmam->dm_mapsize = buflen;
 	dmam->dm_nsegs = 1;
 	dmam->dm_segs[0].ds_addr = segs[0].ds_addr;
 	dmam->dm_segs[0].ds_len = segs[0].ds_len;
-	dmam->dm_segs[0]._ds_memDesc = segs[0]._ds_memDesc;
-	dmam->dm_segs[0]._ds_memMap = segs[0]._ds_memMap;
+	dmam->dm_segs[0]._ds_memDesc = md;
+	dmam->dm_segs[0]._ds_memMap = mmap;
 	UTL_DEBUG_FUN("END");
 	return 0;
 }
@@ -122,9 +119,13 @@ void
 bus_dmamap_unload(bus_dma_tag_t dmat, bus_dmamap_t map)
 {
 	UTL_DEBUG_FUN("START");
-	// TODO: What should be done here?
+	/*
+	 * No resources to free; just mark the mappings as
+	 * invalid.
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 	UTL_DEBUG_FUN("END");
-	return;
 }
 
 void
@@ -138,25 +139,23 @@ bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, bus_siz
 	return;
 }
 
+// alignment and boundary are always zero in the code!
 int
 bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
 		 int nsegs, int *rsegs, int flags)
 {
 	UTL_DEBUG_FUN("START");
-	if (nsegs != 1) return ENOTSUP; // only one supported for now
-	_bus_dma_segment_t *_segs = reinterpret_cast<_bus_dma_segment_t *>(segs);
 
 	UTL_CHK_PTR(tag, EINVAL);
-	UTL_CHK_PTR(_segs, EINVAL);
+	UTL_CHK_PTR(segs, EINVAL);
 	UTL_CHK_PTR(rsegs, EINVAL);
 
+	IOOptionBits options = kIODirectionInOut | kIOMapInhibitCache;
+	if (nsegs == 1) {
+		options |= kIOMemoryPhysicallyContiguous;
+	}
 	// allocate srange of physical memory (virtual too?)
-	auto *memDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task,
-									 kIODirectionInOut |
-									 kIOMemoryPhysicallyContiguous |
-									 kIOMapInhibitCache,
-									 size,
-									 0x00000000ffffffffull);
+	auto *memDesc = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, options, size, 0xfffff000);
 	if (!memDesc) {
 		UTL_ERR("Could not allocate %d bytes of DMA (memDesc is null)!", (int) size);
 		return ENOMEM;
@@ -178,10 +177,10 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 	}
 
 	// return physical address
-	_segs[0].ds_addr = physAddr;
-	_segs[0].ds_len = len;
-	_segs[0]._ds_memDesc = memDesc;
-	_segs[0]._ds_memMap = nullptr; // check all members are initialized
+	segs[0].ds_addr = physAddr;
+	segs[0].ds_len = len;
+	segs[0]._ds_memDesc = memDesc;
+	segs[0]._ds_memMap = nullptr; // check all members are initialized
 
 	*rsegs = 1;
 	UTL_DEBUG_FUN("END");
@@ -193,14 +192,12 @@ bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
 {
 	UTL_DEBUG_FUN("START");
 	UTL_CHK_PTR(segs,);
-	if (nsegs != 1) return; // only one supported for now
-	_bus_dma_segment_t *_segs = reinterpret_cast<_bus_dma_segment_t *>(segs);
-	auto &memDesc = _segs[0]._ds_memDesc; // we use a referece because we will set it to null
+	auto &memDesc = segs[0]._ds_memDesc; // we use a referece because we will set it to null
 	UTL_CHK_PTR(memDesc,);
 
 	// complete and release
-	memDesc->complete(kIODirectionInOut);
-	UTL_DEBUG_MEM("Freeing memory @ physical address 0x%04x", (int) _segs[0].ds_addr);
+	memDesc->complete();
+	UTL_DEBUG_MEM("Freeing memory @ physical address 0x%04x", (int) segs[0].ds_addr);
 	UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 	UTL_DEBUG_FUN("END");
 }
@@ -209,31 +206,27 @@ int
 bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t size, caddr_t *kvap, int flags)
 {
 	UTL_DEBUG_FUN("START");
-	if (nsegs != 1) return ENOTSUP; // only one supported for now
-	_bus_dma_tag *_tag = reinterpret_cast<_bus_dma_tag *>(tag);
-	_bus_dma_segment_t *_segs = reinterpret_cast<_bus_dma_segment_t *>(segs);
-	UTL_CHK_PTR(_tag, EINVAL);
-	UTL_CHK_PTR(_segs, EINVAL);
+	UTL_CHK_PTR(segs, EINVAL);
 	UTL_CHK_PTR(kvap, EINVAL);
 
-	auto memDesc = _segs[0]._ds_memDesc;
+	auto memDesc = segs[0]._ds_memDesc;
 	if (!memDesc) return EINVAL;
-	if (_segs[0]._ds_memMap) {
+	if (segs[0]._ds_memMap) {
 		UTL_ERR("_ds_memMap should be null but it's not!");
 		return ENOTSUP;
 	}
 
-	_segs[0]._ds_memMap = memDesc->map();
-	if (!_segs[0]._ds_memMap) {
+	segs[0]._ds_memMap = memDesc->map();
+	if (!segs[0]._ds_memMap) {
 		UTL_ERR("memoryDescriptor->map() returned null!");
 		return ENOMEM;
 	}
 
-	auto virtAddr = _segs[0]._ds_memMap->getAddress(); // getVirtualAddress();
+	auto virtAddr = segs[0]._ds_memMap->getAddress(); // getVirtualAddress();
 	*kvap = (caddr_t) virtAddr;
 
 	// update list
-	if (VA_SEGS::addToList((void *) virtAddr, _segs)) {
+	if (VA_SEGS::addToList((void *) virtAddr, segs)) {
 		UTL_ERR("Could not keep track of memory allocation!");
 		return ENOTSUP;
 	}
@@ -246,7 +239,7 @@ void
 bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
 {
 	UTL_DEBUG_FUN("START");
-	_bus_dma_segment_t *segs;
+	bus_dma_segment_t *segs;
 	if (VA_SEGS::getValueFromList(kva, &segs)) {
 		UTL_ERR("Could not get segments from virtual address!");
 		return;
@@ -254,8 +247,9 @@ bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size)
 	// release memory map
 	auto &memMap = segs[0]._ds_memMap;
 	UTL_CHK_PTR(memMap,);
-	UTL_SAFE_RELEASE_NULL_CHK(memMap, 1);
+	UTL_SAFE_RELEASE_NULL_CHK(memMap, 2); // because the memory descriptor is holding a reference
 	// remove from list
 	VA_SEGS::removeFromList(kva);
 	UTL_DEBUG_FUN("END");
 }
+

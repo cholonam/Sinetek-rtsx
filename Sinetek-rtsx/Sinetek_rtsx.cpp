@@ -179,7 +179,6 @@ void Sinetek_rtsx::trampoline_intr(OSObject *ih, IOInterruptEventSource *ies, in
 // From https://developer.apple.com/library/archive/documentation/HardwareDrivers/Conceptual/ThunderboltDevGuide/Basics02/Basics02.html
 static int findMSI(IOPCIDevice *provider) {
 	int index  = 0;
-	int source = 0;
 	for (index = 0; ; index++) {
 		IOReturn result   = kIOReturnSuccess;
 		int interruptType = 0;
@@ -188,7 +187,6 @@ static int findMSI(IOPCIDevice *provider) {
 		if (result != kIOReturnSuccess)
 			return -1;
 		if (interruptType & kIOInterruptTypePCIMessaged) {
-			source = index;
 			UTL_LOG("MSI interrupt found at index %d", index);
 			return index;
 		}
@@ -427,9 +425,13 @@ void Sinetek_rtsx::blk_attach()
 	// TODO: Return an error when this method fails!
 	printf("rtsx: blk_attach()\n");
 
+	if (sddisk_) {
+		UTL_LOG("sddisk should be null, but it's not!");
+	}
 	sddisk_ = OSTypeAlloc(SDDisk); // equivalent to new SDDisk();
 	UTL_CHK_PTR(sddisk_,);
 	if (!sddisk_->init((struct sdmmc_softc *) rtsx_softc_original_->sdmmc)) { // TODO: Fix this!
+		UTL_ERR("SDDisk initialization failed!");
 		UTL_SAFE_RELEASE_NULL(sddisk_);
 		return;
 	};
@@ -442,9 +444,12 @@ void Sinetek_rtsx::blk_attach()
 void Sinetek_rtsx::blk_detach()
 {
 	UTL_DEBUG_FUN("START");
+	UTL_CHK_PTR(sddisk_, );
 
 	if (!sddisk_->terminate()) {
-		UTL_DEBUG_DEF("sddisk->terminate() returns false!");
+		UTL_ERR("SDDisk::terminate() returns false! (retainCount = %d)", sddisk_->getRetainCount());
+	} else {
+		UTL_LOG("SDDisk terminated (retainCount = %d)", sddisk_->getRetainCount());
 	}
 	sddisk_ = NULL;
 	UTL_DEBUG_FUN("END");

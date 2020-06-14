@@ -17,17 +17,18 @@ struct rwlock {
 	uint8_t space[2 * LCK_RW_T_SIZE]; // take twice the space, just in case
 };
 
+struct IOMemoryMap;              // forward declaration
 struct IOBufferMemoryDescriptor; // forward declaration
 typedef struct {
 	// PUBLIC MEMBERS
 	uint64_t                      ds_addr;
 	uint64_t                      ds_len;
 	// PRIVATE MEMBERS
-	void *                        _ds_memDesc;
-	void *                        _ds_memMap;
+	struct IOMemoryDescriptor *_ds_memDesc;
+	struct IOMemoryMap *       _ds_memMap;
 } bus_dma_segment_t;
 
-typedef struct {
+typedef struct bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
@@ -45,6 +46,6 @@ typedef struct {
 	bus_size_t        dm_mapsize;    /* size of the mapping */
 	int               dm_nsegs;    /* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];    /* segments; variable length */
-} bus_dmamap, *bus_dmamap_t;
+} *bus_dmamap_t;
 
 #endif /* SINETEK_RTSX_COMPAT_OPENBSD_TYPES_H */

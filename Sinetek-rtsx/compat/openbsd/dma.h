@@ -37,7 +37,9 @@ extern bus_space_tag_t    gBusSpaceTag;
 
 extern bus_dma_tag_t      gBusDmaTag;
 
-/// Allocate and initialize a DMA handle
+/// Allocate and initialize a DMA handle.
+///
+/// This function just allocates the memory for dmamp and initializes the hidden members of the struct.
 int
 bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 		  bus_size_t boundary, int flags, bus_dmamap_t *dmamp);
@@ -48,19 +50,26 @@ bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmamp);
 
 /// Loads a DMA handle with mappings for a DMA transfer.
 /// It assumes that all pages involved in a DMA transfer are wired.
+///
+/// This is the function that populates the scatter/gather list, taking into account maxsegsz and boundary in dmamap.
+/// Ideally, this function should use IODMACommand to extract the scatter/gather list.
 int
 bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t buflen, struct proc *p, int flags);
 
-/// Delete the mappings for a given DMA handle
+/// Delete the mappings for a given DMA handle.
 void
 bus_dmamap_unload(bus_dma_tag_t dmat, bus_dmamap_t map);
 
-/// Perform pre- and post-DMA operation cache and/or buffer synchronization
+/// Perform pre- and post-DMA operation cache and/or buffer synchronization.
+///
+/// These operations are noops in x86.
 void
 bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, bus_size_t size, int ops);
 
 /// Allocate some DMA-able memory. All pages allocated by bus_dmamem_alloc() will be wired down until they are freed by
 /// bus_dmamem_free().
+///
+/// Alignment and boundary are not yet implemented since all the calls in rtsx use 0 for these parameters.
 int
 bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
 		 int nsegs, int *rsegs, int flags);
@@ -70,6 +79,9 @@ void
 bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
 
 /// Map DMA memory into kernel's address space
+///
+/// This function will call map() on the IOBufferMemoryDescriptor to assign a virtual address to the DMA pysical address
+/// ranges.
 int
 bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs, size_t size, caddr_t *kvap, int flags);
 

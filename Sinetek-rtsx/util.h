@@ -44,8 +44,6 @@ do { \
 #define UTL_SAFE_RELEASE_NULL(ptr) \
 do { \
 	if (ptr) { \
-		/* if ((ptr)->getRetainCount() != 1) \
-			UTL_ERR("%s: Wrong retain count (%d)", #ptr, (ptr)->getRetainCount()); */ \
 		(ptr)->release(); \
 		(ptr) = nullptr; \
 	} else { \
@@ -55,8 +53,8 @@ do { \
 #define UTL_SAFE_RELEASE_NULL_CHK(ptr, retCnt) \
 do { \
 	if (ptr) { \
-		/* if ((ptr)->getRetainCount() != retCnt) \
-			UTL_ERR("%s: Wrong retain count (%d)", #ptr, (ptr)->getRetainCount()); */ \
+		if ((ptr)->getRetainCount() != retCnt) \
+			UTL_ERR("%s: Wrong retain count (%d, expected %d)", #ptr, (ptr)->getRetainCount(), (retCnt)); \
 		(ptr)->release(); \
 		(ptr) = nullptr; \
 	} else { \
