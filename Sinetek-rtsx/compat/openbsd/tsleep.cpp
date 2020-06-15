@@ -28,6 +28,11 @@ int tsleep_nsec(void *ident, int priority, const char *wmesg, uint64_t nsecs)
 		ret = IORecursiveLockSleep((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock(),
 					   ident, THREAD_UNINT);
 	} else {
+#if DEBUG
+		// in debug mode, increase all timeouts to make sure we give time for logging delays
+		if (nsecs * 10 > nsecs) // make sure we don't overflow
+			nsecs *= 10;
+#endif
 		ret = IORecursiveLockSleepDeadline((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock(),
 						   ident, nsecs2AbsoluteTimeDeadline(nsecs), THREAD_UNINT);
 	}
