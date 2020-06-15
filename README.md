@@ -32,6 +32,7 @@ The code allows some customization by defining/undefining certain preprocessor m
 | Option              | Notes                                                                                                                       |
 |---------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | `-rtsx_mimic_linux` | Do some extra initialization which may be useful if your chip is exactly RTS525A version B (exactly the same as mine).      |
+| `-rtsx_no_adma`     | Disable ADMA.                                                                                                               |
 | `-rtsx_ro`          | Read-only mode (disable writing).                                                                                           |
 
 ## To Do
