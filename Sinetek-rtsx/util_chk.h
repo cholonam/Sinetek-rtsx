@@ -14,9 +14,10 @@
 
 #define UTL_CHK_SUCCESS(expr) \
 ({ \
-	int sinetek_rtsx_utl_chk_success = expr; \
+	int sinetek_rtsx_utl_chk_success = (expr); \
 	if (sinetek_rtsx_utl_chk_success != kIOReturnSuccess) { \
-		UTL_ERR("%s returns error %d", #expr, sinetek_rtsx_utl_chk_success); \
+		UTL_ERR("%s returns error 0x%x (%d)", #expr, sinetek_rtsx_utl_chk_success, \
+			sinetek_rtsx_utl_chk_success); \
 	} \
 	sinetek_rtsx_utl_chk_success; \
 })

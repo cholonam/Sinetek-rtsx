@@ -91,6 +91,7 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 	UTL_CHK_PTR(dmam, EINVAL);
 	UTL_CHK_PTR(buf, EINVAL);
 	if (p != nullptr) {
+		UTL_ERR("Only kernel process (NULL) supported!");
 		return ENOTSUP; // only kernel space supported
 	}
 
@@ -119,10 +120,7 @@ void
 bus_dmamap_unload(bus_dma_tag_t dmat, bus_dmamap_t map)
 {
 	UTL_DEBUG_FUN("START");
-	/*
-	 * No resources to free; just mark the mappings as
-	 * invalid.
-	 */
+	UTL_CHK_PTR(map, );
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	UTL_DEBUG_FUN("END");
@@ -172,11 +170,12 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 	int         segIdx = 0;
 	auto physAddr = memDesc->getPhysicalSegment(off, &len);
 	if ((nsegs == 1 && len != size) || !physAddr) {
-		UTL_ERR("len=%d, size=%d, addr=" RTSX_PTR_FMT, (int) len, (int) size, RTSX_PTR_FMT_VAR(physAddr));
+		UTL_ERR("len=%d, size=%d, physAddr=%08llx%s", (int) len, (int) size, physAddr,
+			physAddr > 0xffffffff ? " (HIGHMEM)" : "");
 		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 		return ENOTSUP;
 	}
-	UTL_DEBUG_MEM("Allocated %llu bytes @ physical address 0x%08llx (nsegs=%d firstSegLen=%llu size%lu)",
+	UTL_DEBUG_MEM("Allocated %llu bytes @ physical address 0x%08llx (nsegs=%d firstSegLen=%llu size=%lu)",
 		      len, physAddr, nsegs, len, size);
 	// return physical address
 	segs[segIdx].ds_addr = physAddr;
@@ -214,8 +213,8 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 			return ENOMEM;
 		}
 	}
-	UTL_DEBUG_MEM("Allocated 0x%lx bytes @ physical address 0x%08llx in %d segments", size, segs[0].ds_addr,
-		      segIdx);
+	UTL_DEBUG_MEM("Allocated %ld bytes @ physical address 0x%08llx in %d segments (firstSegLen=%llu)", size,
+		      segs[0].ds_addr, segIdx, segs[0].ds_len);
 	segs[0]._ds_memDesc = memDesc;
 	segs[0]._ds_memMap = nullptr; // check all members are initialized
 	*rsegs = segIdx;

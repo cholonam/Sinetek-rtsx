@@ -7,7 +7,15 @@
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers",
                 "${workspaceFolder}/**"
             ],
-            "defines": [ "APPLE", "KERNEL" ],
+            "defines": [
+                    "APPLE",
+                    "KERNEL",
+                    "RTSX_FIX_TASK_BUG",
+                    "RTSX_USE_ADMA",
+                    "RTSX_USE_IOFIES",
+                    "RTSX_USE_IOLOCK",
+                    "RTSX_USE_WRITEBYTES"
+            ],
             "macFrameworkPath": [
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks"
             ],

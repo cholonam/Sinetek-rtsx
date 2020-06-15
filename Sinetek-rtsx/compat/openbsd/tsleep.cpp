@@ -15,8 +15,19 @@
 
 int tsleep_nsec(void *ident, int priority, const char *wmesg, uint64_t nsecs)
 {
-	UTL_DEBUG_LOOP("%s: tsleep_nsec called (havelock=%d)", wmesg ? wmesg : "(null)",
-		      IORecursiveLockHaveLock((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock()));
+#if UTL_LOG_DELAY_MS
+	// in debug mode, increase all timeouts to make sure we give time for logging delays
+	// We give enough time for 100 debug messages
+	if (nsecs != 0 && nsecs != INFSLP) {
+		const uint64_t LOG_DELAY_NS = UTL_LOG_DELAY_MS * 1000000;
+		auto ns_to_add = 100 * LOG_DELAY_NS;
+		if ((nsecs + ns_to_add) > nsecs) // make sure we don't overflow
+			nsecs += ns_to_add;
+	}
+#endif
+	UTL_DEBUG_LOOP("%s: tsleep_nsec called (%llu ms, havelock=%d)", wmesg ? wmesg : "(null)",
+		       nsecs / 1000000,
+		       IORecursiveLockHaveLock((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock()));
 	if (!IORecursiveLockHaveLock((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock())) {
 		UTL_DEBUG_LOOP("Lock is not held (wmesg=%s, nsecs=%lld)!", wmesg ? wmesg : "(null)", (int64_t) nsecs);
 		IOSleep(1); // just sleep for a bit since we are probably waiting for something
@@ -28,11 +39,6 @@ int tsleep_nsec(void *ident, int priority, const char *wmesg, uint64_t nsecs)
 		ret = IORecursiveLockSleep((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock(),
 					   ident, THREAD_UNINT);
 	} else {
-#if DEBUG
-		// in debug mode, increase all timeouts to make sure we give time for logging delays
-		if (nsecs * 10 > nsecs) // make sure we don't overflow
-			nsecs *= 10;
-#endif
 		ret = IORecursiveLockSleepDeadline((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock(),
 						   ident, nsecs2AbsoluteTimeDeadline(nsecs), THREAD_UNINT);
 	}
