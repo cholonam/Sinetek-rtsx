@@ -161,28 +161,64 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 		return ENOMEM;
 	}
 
+	// we need to call prepare() so that the pages are not paged-out
+	// (we cannot call getPhysicalSegment() before prepare())
+	if (UTL_CHK_SUCCESS(memDesc->prepare()) != kIOReturnSuccess) {
+		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
+		return -ENOMEM;
+	}
 	IOByteCount len;
-	auto physAddr = memDesc->getPhysicalSegment(0, &len);
-	if (len != size || !physAddr) {
+	IOByteCount off = 0;
+	int         segIdx = 0;
+	auto physAddr = memDesc->getPhysicalSegment(off, &len);
+	if ((nsegs == 1 && len != size) || !physAddr) {
 		UTL_ERR("len=%d, size=%d, addr=" RTSX_PTR_FMT, (int) len, (int) size, RTSX_PTR_FMT_VAR(physAddr));
 		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 		return ENOTSUP;
 	}
-	UTL_DEBUG_MEM("Allocated 0x%x bytes @ physical address 0x%04x", (int) len, (int) physAddr);
-
-	// call prepare here? does this wire the pages?
-	if (UTL_CHK_SUCCESS(memDesc->prepare(kIODirectionNone))) { // kIODirectionNone use descriptor's direction
-		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
-		return ENOMEM;
-	}
-
+	UTL_DEBUG_MEM("Allocated %llu bytes @ physical address 0x%08llx (nsegs=%d firstSegLen=%llu size%lu)",
+		      len, physAddr, nsegs, len, size);
 	// return physical address
-	segs[0].ds_addr = physAddr;
-	segs[0].ds_len = len;
+	segs[segIdx].ds_addr = physAddr;
+	segs[segIdx].ds_len = len;
+	segIdx++;
+
+	// At this point, if len < size, we need to return more than one segment
+	
+	IOByteCount totalLen = len;
+	off += len;
+	while (totalLen < size) {
+		auto physAddr = memDesc->getPhysicalSegment(off, &len);
+		if (!physAddr || !len) {
+			UTL_ERR("WRONG VALUE RETURNED! (len=%llu totalLen=%llu, size=%lu, addr=" RTSX_PTR_FMT ")", len,
+				totalLen, size, RTSX_PTR_FMT_VAR(physAddr));
+			UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
+			return ENOMEM;
+		}
+		totalLen += len;
+		off += len;
+		if (totalLen > size) {
+			UTL_ERR("totalLen > size! (len=%llu totalLen=%llu, size=%lu, addr=" RTSX_PTR_FMT ")", len,
+				totalLen, size, RTSX_PTR_FMT_VAR(physAddr));
+			UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
+			return ENOMEM;
+		}
+		segs[segIdx].ds_addr = physAddr;
+		segs[segIdx].ds_len = len;
+		segIdx++;
+		if (totalLen < size && segIdx > nsegs) {
+			// too many segments! we need to return an error
+			UTL_ERR("TOO MANY SEGMENTS! (len=%llu totalLen=%llu, size=%lu, addr=" RTSX_PTR_FMT ")", len,
+				totalLen, size, RTSX_PTR_FMT_VAR(physAddr));
+			UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
+			return ENOMEM;
+		}
+	}
+	UTL_DEBUG_MEM("Allocated 0x%lx bytes @ physical address 0x%08llx in %d segments", size, segs[0].ds_addr,
+		      segIdx);
 	segs[0]._ds_memDesc = memDesc;
 	segs[0]._ds_memMap = nullptr; // check all members are initialized
-
-	*rsegs = 1;
+	*rsegs = segIdx;
 	UTL_DEBUG_FUN("END");
 	return 0;
 }
