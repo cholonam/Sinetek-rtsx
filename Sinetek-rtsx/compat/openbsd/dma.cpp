@@ -123,7 +123,7 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 	mmap = segs[0]._ds_memMap;
 
 	if (md->getLength() != buflen) {
-		UTL_ERR("Memory descriptor and buffer do not match!");
+		UTL_ERR("Memory descriptor and buffer do not match (%llu vs %lu)!", md->getLength(), buflen);
 		return ENOTSUP;
 	}
 
@@ -177,12 +177,11 @@ bus_dmamap_unload(bus_dma_tag_t dmat, bus_dmamap_t map)
 void
 bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset, bus_size_t size, int ops)
 {
-	UTL_DEBUG_FUN("START");
+	// UTL_DEBUG_FUN("START");
 	// This function should probably call prepare() / complete(), but we already call them in
 	// bus_dmamem_alloc()/bus_dmamem_free()
 	OSSynchronizeIO(); // this is actually a noop on Intel
-	UTL_DEBUG_FUN("END");
-	return;
+	// UTL_DEBUG_FUN("END");
 }
 
 // alignment and boundary are always zero in the code!
@@ -211,7 +210,7 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 	// (we cannot call getPhysicalSegment() before prepare())
 	if (UTL_CHK_SUCCESS(memDesc->prepare()) != kIOReturnSuccess) {
 		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
-		return -ENOMEM;
+		return ENOMEM;
 	}
 	IOByteCount len;
 	IOByteCount off = 0;

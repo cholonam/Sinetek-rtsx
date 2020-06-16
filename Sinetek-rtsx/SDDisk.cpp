@@ -327,14 +327,6 @@ void read_task_impl_(void *_args)
 
 	buf = (u_char *)dma_alloc(actualByteCount, dma_segs, SDMMC_MAXNSEGS, &rsegs,
 				  args->direction == kIODirectionIn ? BUS_DMA_READ : BUS_DMA_WRITE);
-	if (!buf) {
-		if (args->completion.action) {
-			(args->completion.action)(args->completion.target, args->completion.parameter,
-						  kIOReturnNoMemory, actualByteCount);
-		}
-		delete args;
-		UTL_DEBUG_FUN("END (dma_alloc failed)");
-	}
 #else
 	u_char *buf = new u_char[actualByteCount];
 #endif
@@ -342,6 +334,10 @@ void read_task_impl_(void *_args)
 	IOMemoryMap *map = args->buffer->map();
 	u_char *buf = (u_char *) map->getAddress();
 #endif
+	if (!buf) {
+		error = ENOMEM;
+		goto complete;
+	}
 	while (remainingBytes > 0) {
 		IOByteCount sendByteCount = remainingBytes > maxSendBytes ? maxSendBytes : remainingBytes;
 
@@ -381,12 +377,13 @@ void read_task_impl_(void *_args)
 #else
 	UTL_SAFE_RELEASE_NULL_CHK(map, 2); // because buffer is holding a reference
 #endif
+complete:
 	if (args->completion.action) {
 		if (error == 0) {
 			(args->completion.action)(args->completion.target, args->completion.parameter,
 						  kIOReturnSuccess, actualByteCount);
 		} else {
-			UTL_ERR("Returning an IO Error!"
+			UTL_ERR("Returning an Error!"
 				" (%s block = %u nblks = %u blksize = %u physSectSize = %u error = %d)",
 				args->direction == kIODirectionIn ? "READ" : "WRITE",
 				static_cast<unsigned>(args->block),
@@ -394,7 +391,7 @@ void read_task_impl_(void *_args)
 				args->that->blk_size_,
 				sdmmc->sc_fn0->csd.sector_size, error);
 			(args->completion.action)(args->completion.target, args->completion.parameter,
-						  kIOReturnIOError, 0);
+						  error == ENOMEM ? kIOReturnNoMemory : kIOReturnIOError, 0);
 		}
 	} else {
 		UTL_ERR("No completion action!");
