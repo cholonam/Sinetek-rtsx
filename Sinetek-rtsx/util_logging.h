@@ -66,6 +66,12 @@ do { \
 #if DEBUG || SDMMC_DEBUG
 static inline const char *mmcCmd2str(uint16_t mmcCmd) {
 	switch (mmcCmd) {
+
+		/* SDIO commands */
+		case 5: return "SD_IO_SEND_OP_COND";
+		case 52: return "SD_IO_RW_DIRECT";
+		case 53: return "SD_IO_RW_EXTENDED";
+
 		case 0: return "MMC_GO_IDLE_STATE";
 		case 1: return "MMC_SEND_OP_COND";
 		case 2: return "MMC_ALL_SEND_CID";

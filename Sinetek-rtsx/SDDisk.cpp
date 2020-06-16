@@ -425,6 +425,13 @@ IOReturn SDDisk::doAsyncReadWrite(IOMemoryDescriptor *buffer,
 				  IOStorageCompletion *completion)
 {
 	IODirection		direction;
+#if DEBUG
+	static UInt64 maxBlk = 0;
+	if (nblks > maxBlk) {
+		UTL_DEBUG_DEF("%llu blocks requested!", nblks);
+		maxBlk = nblks;
+	}
+#endif
 
 	// Return errors for incoming I/O if we have been terminated
 	if (isInactive() != false)

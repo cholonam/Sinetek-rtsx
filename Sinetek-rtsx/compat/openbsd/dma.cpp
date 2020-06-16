@@ -141,8 +141,6 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 		UInt32                  numSeg = 1;
 		if ((err = UTL_CHK_SUCCESS(dmaCmd->genIOVMSegments(&offset, &segment, &numSeg))))
 			return err;
-		UTL_LOG(" - Segment: offset: 0x%llx ioAddr: 0x%08x ioLen: %d", offset, segment.fIOVMAddr,
-			segment.fLength);
 		dmam->dm_segs[segCnt].ds_addr = segment.fIOVMAddr;
 		dmam->dm_segs[segCnt].ds_len = segment.fLength;
 		segCnt++;
@@ -225,8 +223,6 @@ bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment, bus_s
 		UTL_SAFE_RELEASE_NULL_CHK(memDesc, 1);
 		return ENOTSUP;
 	}
-	UTL_DEBUG_MEM("Allocated %llu bytes @ physical address 0x%08llx (nsegs=%d firstSegLen=%llu size=%lu)",
-		      len, physAddr, nsegs, len, size);
 	// return physical address
 	segs[segIdx].ds_addr = physAddr;
 	segs[segIdx].ds_len = len;
