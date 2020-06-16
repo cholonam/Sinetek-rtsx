@@ -69,6 +69,17 @@ bus_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments, bus_size_t 
 	ret->_dm_boundary = boundary;
 	ret->_dm_flags = flags;
 
+	// Pre-create IODMACommand for reuse
+	IODMACommand::SegmentOptions segmentOptions = { .fStructSize = sizeof(segmentOptions),
+							.fNumAddressBits = 32,
+							.fMaxSegmentSize = maxsegsz,
+							.fMaxTransferSize = 0,
+							.fAlignment = 1,
+							.fAlignmentLength = 1,
+							.fAlignmentInternalSegments = (uint32_t)boundary };
+	IODMACommand *dmaCmd = IODMACommand::withSpecification(kIODMACommandOutputHost32, &segmentOptions,
+							       kIODMAMapOptionMapped, nullptr, nullptr);
+	ret->_dm_dma_command = dmaCmd;
 	*dmamp = ret;
 	UTL_DEBUG_FUN("END");
 	return 0;
@@ -79,6 +90,7 @@ bus_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmamp)
 {
 	UTL_DEBUG_FUN("START");
 	UTL_CHK_PTR(dmamp, );
+	UTL_SAFE_RELEASE_NULL_CHK(dmamp->_dm_dma_command, 1);
 	size_t mapsize = sizeof(struct bus_dmamap) + sizeof(bus_dma_segment_t) * (dmamp->_dm_segcnt - 1);
 	IOFree(dmamp, mapsize);
 	UTL_DEBUG_FUN("END");
@@ -89,6 +101,7 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 {
 	UTL_DEBUG_FUN("START");
 	UTL_CHK_PTR(dmam, EINVAL);
+	UTL_CHK_PTR(dmam->_dm_dma_command, EINVAL);
 	UTL_CHK_PTR(buf, EINVAL);
 	if (p != nullptr) {
 		UTL_ERR("Only kernel process (NULL) supported!");
@@ -102,14 +115,48 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 		UTL_ERR("Could not get segments from virtual address!");
 		return ENOTSUP;
 	}
+	UTL_CHK_PTR(segs, EINVAL);
+	UTL_CHK_PTR(segs[0]._ds_memDesc, EINVAL);
+	UTL_CHK_PTR(segs[0]._ds_memMap, EINVAL);
+
 	md = segs[0]._ds_memDesc;
 	mmap = segs[0]._ds_memMap;
 
+	if (md->getLength() != buflen) {
+		UTL_ERR("Memory descriptor and buffer do not match!");
+		return ENOTSUP;
+	}
+
+	// Use IODMACommand to generate segments
+	IODMACommand *dmaCmd = dmam->_dm_dma_command;
+
+	int err;
+	if ((err = UTL_CHK_SUCCESS(dmaCmd->setMemoryDescriptor(md))))
+		return err;
+
+	IOByteCount offset = 0;
+	int         segCnt = 0; // to make sure we can fit the segments in the dmamap
+	while (offset < buflen && segCnt < dmam->_dm_segcnt) {
+		IODMACommand::Segment32 segment;
+		UInt32                  numSeg = 1;
+		if ((err = UTL_CHK_SUCCESS(dmaCmd->genIOVMSegments(&offset, &segment, &numSeg))))
+			return err;
+		UTL_LOG(" - Segment: offset: 0x%llx ioAddr: 0x%08x ioLen: %d", offset, segment.fIOVMAddr,
+			segment.fLength);
+		dmam->dm_segs[segCnt].ds_addr = segment.fIOVMAddr;
+		dmam->dm_segs[segCnt].ds_len = segment.fLength;
+		segCnt++;
+	}
+
+	// Make sure that everything went ok
+	if (offset != buflen) {
+		UTL_ERR("Error generating DMA scatter/gather list (offset = %llx, buflen = %lx", offset, buflen);
+		return ENOTSUP;
+	}
+
 	// load segment information into dmam:
 	dmam->dm_mapsize = buflen;
-	dmam->dm_nsegs = 1;
-	dmam->dm_segs[0].ds_addr = segs[0].ds_addr;
-	dmam->dm_segs[0].ds_len = segs[0].ds_len;
+	dmam->dm_nsegs = segCnt;
 	dmam->dm_segs[0]._ds_memDesc = md;
 	dmam->dm_segs[0]._ds_memMap = mmap;
 	UTL_DEBUG_FUN("END");
@@ -121,6 +168,9 @@ bus_dmamap_unload(bus_dma_tag_t dmat, bus_dmamap_t map)
 {
 	UTL_DEBUG_FUN("START");
 	UTL_CHK_PTR(map, );
+	UTL_CHK_PTR(map->_dm_dma_command, );
+
+	map->_dm_dma_command->clearMemoryDescriptor();
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	UTL_DEBUG_FUN("END");
