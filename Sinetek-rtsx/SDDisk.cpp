@@ -310,7 +310,9 @@ void read_task_impl_(void *_args)
 		      sdmmc->sc_fn0->csd.sector_size);
 
 	actualByteCount = args->nblks * args->that->blk_size_;
-	IOByteCount maxSendBytes = 128 * 1024;
+	static const IOByteCount maxSendBytes = 128 * 1024;
+	// we can use a static buffer because this method is not reentrant
+	static u_char static_buffer[maxSendBytes];
 	IOByteCount remainingBytes = args->nblks * 512;
 	IOByteCount sentBytes = 0;
 	int blocks = (int) args->block;
@@ -327,7 +329,7 @@ void read_task_impl_(void *_args)
 					  SDMMC_MAXNSEGS, &rsegs,
 					  args->direction == kIODirectionIn ? BUS_DMA_READ : BUS_DMA_WRITE);
 	} else {
-		buf = new u_char[actualByteCount];
+		buf = static_buffer;
 	}
 
 	if (!buf) {
@@ -338,21 +340,21 @@ void read_task_impl_(void *_args)
 		IOByteCount sendByteCount = remainingBytes > maxSendBytes ? maxSendBytes : remainingBytes;
 
 		if (args->direction == kIODirectionIn) {
-			error = sdmmc_mem_read_block(sdmmc->sc_fn0, blocks, buf + sentBytes, sendByteCount);
+			error = sdmmc_mem_read_block(sdmmc->sc_fn0, blocks, buf, sendByteCount);
 			if (error)
 				break;
-			IOByteCount copied_bytes = args->buffer->writeBytes(sentBytes, buf + sentBytes, sendByteCount);
+			IOByteCount copied_bytes = args->buffer->writeBytes(sentBytes, buf, sendByteCount);
 			if (copied_bytes == 0) {
 				error = EIO;
 				break;
 			}
 		} else {
-			IOByteCount copied_bytes = args->buffer->readBytes(sentBytes, buf + sentBytes, sendByteCount);
+			IOByteCount copied_bytes = args->buffer->readBytes(sentBytes, buf, sendByteCount);
 			if (copied_bytes == 0) {
 				error = EIO;
 				break;
 			}
-			error = sdmmc_mem_write_block(sdmmc->sc_fn0, blocks, buf + sentBytes, sendByteCount);
+			error = sdmmc_mem_write_block(sdmmc->sc_fn0, blocks, buf, sendByteCount);
 			if (error)
 				break;
 		}
@@ -362,8 +364,6 @@ void read_task_impl_(void *_args)
 	}
 	if (!Sinetek_rtsx_boot_arg_no_adma) {
 		dma_free(buf, actualByteCount, dma_segs, rsegs);
-	} else {
-		delete[] buf;
 	}
 complete:
 	if (args->completion.action) {
