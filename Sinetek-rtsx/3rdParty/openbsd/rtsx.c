@@ -231,12 +231,8 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 #if __APPLE__
 	// ADMA not supported yet
 	saa.caps = SMC_CAPS_4BIT_MODE;
-#if RTSX_USE_ADMA
 	if (!Sinetek_rtsx_boot_arg_no_adma)
 		saa.caps |= SMC_CAPS_DMA;
-#endif
-#else
-	saa.caps = SMC_CAPS_4BIT_MODE | SMC_CAPS_DMA;
 #endif
 	saa.dmat = sc->dmat;
 

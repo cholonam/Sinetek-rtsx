@@ -17,15 +17,13 @@ An OpenBSD-compatibility layer has been added to make the original OpenBSD drive
 
 The code allows some customization by defining/undefining certain preprocessor macros (set on ):
 
-| Option                   | Requires              | Notes                                                                                                                       |
-|--------------------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `RTSX_FIX_TASK_BUG`      |                       | Fix task bug (reusing task pointer instead of allocating it).                                                               |
-| `RTSX_USE_ADMA`          | `RTSX_USE_WRITEBYTES` | Use new ADMA functionality implemented in OpenBSD driver.                                                                   |
-| `RTSX_USE_WRITEBYTES`    |                       | Use `IOMemoryDescriptor::writeBytes()` method to write buffer instead of the original `buffer->map()->getVirtualAddress()`. |
-| `RTSX_USE_IOFIES`        |                       | Use `IOFilterInterruptEventSource` instead of `IOInterruptEventSource` (should give better performance).                    |
-| `RTSX_USE_IOLOCK`        |                       | This should use more locks to protect critical sections.                                                                    |
-| `RTSX_USE_IOCOMMANDGATE` | `RTSX_USE_IOLOCK`     | A try to make `IOCommandGate` working, but never really worked.                                                             |
-| `RTSX_USE_IOMALLOC`      |                       | Use `IOMalloc`/`IOFree` for memory management instead of `new`/`delete`.                                                    |
+| Option                   | Requires          | Notes                                                                                                                       |
+|--------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `RTSX_FIX_TASK_BUG`      |                   | Fix task bug (reusing task pointer instead of allocating it).                                                               |
+| `RTSX_USE_IOFIES`        |                   | Use `IOFilterInterruptEventSource` instead of `IOInterruptEventSource` (should give better performance).                    |
+| `RTSX_USE_IOLOCK`        |                   | This should use more locks to protect critical sections.                                                                    |
+| `RTSX_USE_IOCOMMANDGATE` | `RTSX_USE_IOLOCK` | A try to make `IOCommandGate` working, but never really worked.                                                             |
+| `RTSX_USE_IOMALLOC`      |                   | Use `IOMalloc`/`IOFree` for memory management instead of `new`/`delete`.                                                    |
 
 ### Boot Arguments
 

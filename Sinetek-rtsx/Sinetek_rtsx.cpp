@@ -58,9 +58,7 @@ static IOPMPowerState ourPowerStates[kPowerStateCount] =
 
 // Use global variables, since these will be accessed from the BSD code
 int Sinetek_rtsx_boot_arg_mimic_linux = 0;
-#if RTSX_USE_ADMA
 int Sinetek_rtsx_boot_arg_no_adma = 0;
-#endif
 
 bool Sinetek_rtsx::init(OSDictionary *dictionary) {
 	if (!super::init()) return false;
@@ -80,10 +78,8 @@ bool Sinetek_rtsx::init(OSDictionary *dictionary) {
 		UTL_LOG("Read-only mode");
 	}
 	Sinetek_rtsx_boot_arg_mimic_linux = (int) PE_parse_boot_argn("-rtsx_mimic_linux", &dummy, sizeof(dummy));
-#if RTSX_USE_ADMA
 	Sinetek_rtsx_boot_arg_no_adma = (int)PE_parse_boot_argn("-rtsx_no_adma", &dummy, sizeof(dummy));
 	UTL_LOG("ADMA %s", Sinetek_rtsx_boot_arg_no_adma ? "disabled" : "enabled");
-#endif
 	UTL_DEBUG_FUN("END");
 	return true;
 }

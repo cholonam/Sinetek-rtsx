@@ -28,9 +28,7 @@ typedef struct {
 	struct IOMemoryMap *       _ds_memMap;
 } bus_dma_segment_t;
 
-#if RTSX_USE_ADMA
 struct IODMACommand; // forward declaration
-#endif
 typedef struct bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use by machine-independent code.
@@ -43,9 +41,8 @@ typedef struct bus_dmamap {
 
 	void        * _dm_cookie;    /* cookie for bus-specific functions */
 
-#if RTSX_USE_ADMA
 	struct IODMACommand *_dm_dma_command;
-#endif
+
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */

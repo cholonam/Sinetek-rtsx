@@ -30,7 +30,6 @@ OSDefineMetaClassAndStructors(SDDisk, IOBlockStorageDevice)
 /// IOBlockStorageDriver, because it's not the same (IOATABlockStorageDriver is the provider of IOATABlockStorageDriver,
 /// but IOBlockStorageDriver is the CLIENT of IOBlockStorageDevice). This one DOES forward doAsyncReadWrite.
 
-#if RTSX_USE_ADMA
 namespace {
 
 static void *dma_alloc(bus_size_t size, bus_dma_segment_t *dma_segs, int nsegs, int *rsegs, int flags)
@@ -58,7 +57,6 @@ static void dma_free(void *kva, bus_size_t bufSize, bus_dma_segment_t *dma_segs,
 }
 
 } // namespace
-#endif // RTSX_USE_ADMA
 
 bool SDDisk::init(struct sdmmc_softc *sc_sdmmc, OSDictionary* properties)
 {
@@ -316,24 +314,22 @@ void read_task_impl_(void *_args)
 	IOByteCount remainingBytes = args->nblks * 512;
 	IOByteCount sentBytes = 0;
 	int blocks = (int) args->block;
-#if RTSX_USE_WRITEBYTES
-#if RTSX_USE_ADMA
-	// Since the 'args->buffer' IOMemoryDescriptor that we receive may have it's physical pages in the >4GB memory,
-	// we need to copy it to a new buffer allocated using OpenBSD dma functions. This way we can obtain a
-	// scatter/gather list from it with addresses below 4GB.
 	bus_dma_segment_t dma_segs[SDMMC_MAXNSEGS];
 	int               rsegs;
 	u_char *          buf;
 
-	buf = (u_char *)dma_alloc(actualByteCount, dma_segs, SDMMC_MAXNSEGS, &rsegs,
-				  args->direction == kIODirectionIn ? BUS_DMA_READ : BUS_DMA_WRITE);
-#else
-	u_char *buf = new u_char[actualByteCount];
-#endif
-#else
-	IOMemoryMap *map = args->buffer->map();
-	u_char *buf = (u_char *) map->getAddress();
-#endif
+	extern int Sinetek_rtsx_boot_arg_no_adma;
+	if (!Sinetek_rtsx_boot_arg_no_adma) {
+		// Since the 'args->buffer' IOMemoryDescriptor that we receive may have it's physical pages in the >4GB
+		// memory, we need to copy it to a new buffer allocated using OpenBSD dma functions. This way we can
+		// obtain a scatter/gather list from it with addresses below 4GB.
+		buf = (u_char *)dma_alloc(actualByteCount > maxSendBytes ? maxSendBytes : actualByteCount, dma_segs,
+					  SDMMC_MAXNSEGS, &rsegs,
+					  args->direction == kIODirectionIn ? BUS_DMA_READ : BUS_DMA_WRITE);
+	} else {
+		buf = new u_char[actualByteCount];
+	}
+
 	if (!buf) {
 		error = ENOMEM;
 		goto complete;
@@ -345,21 +341,17 @@ void read_task_impl_(void *_args)
 			error = sdmmc_mem_read_block(sdmmc->sc_fn0, blocks, buf + sentBytes, sendByteCount);
 			if (error)
 				break;
-#if RTSX_USE_WRITEBYTES
 			IOByteCount copied_bytes = args->buffer->writeBytes(sentBytes, buf + sentBytes, sendByteCount);
 			if (copied_bytes == 0) {
 				error = EIO;
 				break;
 			}
-#endif
 		} else {
-#if RTSX_USE_WRITEBYTES
 			IOByteCount copied_bytes = args->buffer->readBytes(sentBytes, buf + sentBytes, sendByteCount);
 			if (copied_bytes == 0) {
 				error = EIO;
 				break;
 			}
-#endif
 			error = sdmmc_mem_write_block(sdmmc->sc_fn0, blocks, buf + sentBytes, sendByteCount);
 			if (error)
 				break;
@@ -368,15 +360,11 @@ void read_task_impl_(void *_args)
 		remainingBytes -= sendByteCount;
 		sentBytes += sendByteCount;
 	}
-#if RTSX_USE_WRITEBYTES
-#if RTSX_USE_ADMA
-	dma_free(buf, actualByteCount, dma_segs, rsegs);
-#else
-	delete[] buf;
-#endif
-#else
-	UTL_SAFE_RELEASE_NULL_CHK(map, 2); // because buffer is holding a reference
-#endif
+	if (!Sinetek_rtsx_boot_arg_no_adma) {
+		dma_free(buf, actualByteCount, dma_segs, rsegs);
+	} else {
+		delete[] buf;
+	}
 complete:
 	if (args->completion.action) {
 		if (error == 0) {
