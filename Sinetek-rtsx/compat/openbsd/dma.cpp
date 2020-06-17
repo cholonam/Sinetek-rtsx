@@ -122,8 +122,10 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 	md = segs[0]._ds_memDesc;
 	mmap = segs[0]._ds_memMap;
 
-	if (md->getLength() != buflen) {
-		UTL_ERR("Memory descriptor and buffer do not match (%llu vs %lu)!", md->getLength(), buflen);
+	auto mdLength = md->getLength();
+
+	if (mdLength < buflen) {
+		UTL_ERR("Memory descriptor is smaller than buffer (%llu vs %lu)!", md->getLength(), buflen);
 		return ENOTSUP;
 	}
 
@@ -136,11 +138,18 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 
 	IOByteCount offset = 0;
 	int         segCnt = 0; // to make sure we can fit the segments in the dmamap
+
+	// Note that buflen can be smaller than mdLength, but not larger
 	while (offset < buflen && segCnt < dmam->_dm_segcnt) {
 		IODMACommand::Segment32 segment;
 		UInt32                  numSeg = 1;
 		if ((err = UTL_CHK_SUCCESS(dmaCmd->genIOVMSegments(&offset, &segment, &numSeg))))
 			return err;
+		if (offset > buflen) {
+			UTL_DEBUG_LOOP("Tweaking SG list...");
+			segment.fLength -= (offset - buflen);
+			offset = buflen;
+		}
 		dmam->dm_segs[segCnt].ds_addr = segment.fIOVMAddr;
 		dmam->dm_segs[segCnt].ds_len = segment.fLength;
 		segCnt++;
@@ -152,6 +161,18 @@ bus_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf, bus_size_t bufl
 		return ENOTSUP;
 	}
 
+#if 0
+	// Dump segments if more than one
+	if (segCnt > 1) {
+		UTL_DEBUG_LOOP("%lu%s allocated in %d segments:",
+			       buflen > 2048 ? (buflen + 512) / 1024 : buflen, // rounding
+			       buflen > 2048 ? " KiB" : " bytes", segCnt);
+		for (int i = 0; i < segCnt; i++) {
+			UTL_DEBUG_LOOP(" - Segment[%d]: ioAddr: 0x%08llx ioLen: %llu", i, dmam->dm_segs[i].ds_addr,
+				       dmam->dm_segs[i].ds_len);
+		}
+	}
+#endif
 	// load segment information into dmam:
 	dmam->dm_mapsize = buflen;
 	dmam->dm_nsegs = segCnt;
