@@ -63,7 +63,6 @@ do { \
 #define UTL_DEBUG_INT(...)  UTL_DEBUG(UTL_DEBUG_LVL_INT,  "[INT] " __VA_ARGS__)
 #define UTL_DEBUG_LOOP(...) UTL_DEBUG(UTL_DEBUG_LVL_LOOP, "[LOOP] " __VA_ARGS__)
 
-#if DEBUG || SDMMC_DEBUG
 static inline const char *mmcCmd2str(uint16_t mmcCmd) {
 	switch (mmcCmd) {
 
@@ -95,7 +94,6 @@ static inline const char *mmcCmd2str(uint16_t mmcCmd) {
 		default: return "?";
 	}
 }
-#endif // DEBUG || SDMMC_DEBUG
 
 #if DEBUG
 typedef uint64_t IOByteCount;

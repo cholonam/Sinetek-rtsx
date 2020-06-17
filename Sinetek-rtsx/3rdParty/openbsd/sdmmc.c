@@ -664,6 +664,12 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 #endif
 
 	error = cmd->c_error;
+#if __APPLE__
+	void sdmmc_dump_command(struct sdmmc_softc *, struct sdmmc_command *);
+
+	if (error)
+		sdmmc_dump_command(sc, cmd);
+#endif
 	if (!cold)
 		wakeup(cmd);
 
@@ -850,6 +856,12 @@ exec_done:
 }
 #endif
 
+#if __APPLE__
+#if !SDMMC_DEBUG
+#define SDMMC_DEBUG 1
+int sdmmcdebug = 0;
+#endif
+#endif
 #ifdef SDMMC_DEBUG
 void
 sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
