@@ -216,7 +216,7 @@
 		9E9EED9F1E4C65AD00E640DB /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1130;
+				LastUpgradeCheck = 1150;
 				ORGANIZATIONNAME = sinetek;
 				TargetAttributes = {
 					9E9EEDA71E4C65AD00E640DB = {

@@ -29,6 +29,8 @@ OSDefineMetaClassAndStructors(SDDisk, IOBlockStorageDevice)
 /// IOATABlockStorage(Device/Driver) is another good example (note that IOATABlockStorageDriver does not inherit from
 /// IOBlockStorageDriver, because it's not the same (IOATABlockStorageDriver is the provider of IOATABlockStorageDriver,
 /// but IOBlockStorageDriver is the CLIENT of IOBlockStorageDevice). This one DOES forward doAsyncReadWrite.
+/// https://github.com/apple-open-source/macos/blob/master/IOUSBMassStorageClass/IOUFIStorageServices.cpp ->
+/// Another example (USB mass storage)
 
 namespace {
 

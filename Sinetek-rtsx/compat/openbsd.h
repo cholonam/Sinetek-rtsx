@@ -33,12 +33,8 @@ __END_DECLS
 #include "util_chk.h"
 #include "util_logging.h"
 
-// disable execcisve logging from OpenBSD code
-#if OPENBSD_CODE_DEBUG
-#define printf(...) UTL_DEBUG_DEF(__VA_ARGS__)
-#else
-#define printf(...) do {} while (0)
-#endif
+// handle logging from OpenBSD code
+#define printf(...) UTL_LOG(__VA_ARGS__)
 
 #ifdef KASSERT
 #undef KASSERT
