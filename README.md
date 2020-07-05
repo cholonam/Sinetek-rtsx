@@ -27,11 +27,12 @@ The code allows some customization by defining/undefining certain preprocessor m
 
 ### Boot Arguments
 
-| Option              | Notes                                                                                                                       |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `-rtsx_mimic_linux` | Do some extra initialization which may be useful if your chip is exactly RTS525A version B (exactly the same as mine).      |
-| `-rtsx_no_adma`     | Disable ADMA.                                                                                                               |
-| `-rtsx_ro`          | Read-only mode (disable writing).                                                                                           |
+| Option                 | Notes                                                                                                                       |
+|------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `-rtsx_mimic_linux`    | Do some extra initialization which may be useful if your chip is exactly RTS525A version B (exactly the same as mine).      |
+| `-rtsx_no_adma`        | Disable ADMA.                                                                                                               |
+| `-rtsx_ro`             | Read-only mode (disable writing).                                                                                           |
+| `rtsx_timeout_shift=n` | Multiply timeouts times 2<sup>*n*</sup>. May help with some slow cards (i.e.: `rtsx_timeout_shift=2`).                      |
 
 ## To Do
 

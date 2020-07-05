@@ -25,6 +25,7 @@
 #include "compat/openbsd.h"
 extern int Sinetek_rtsx_boot_arg_mimic_linux;
 extern int Sinetek_rtsx_boot_arg_no_adma;
+extern int Sinetek_rtsx_boot_arg_timeout_shift;
 #else // __APPLE__
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1606,14 +1607,21 @@ rtsx_wait_intr(struct rtsx_softc *sc, int mask, int secs)
 	s = splsdmmc();
 	status = sc->intr_status & mask;
 	while (status == 0) {
-		if (tsleep_nsec(&sc->intr_status, PRIBIO, "rtsxintr",
 #if __APPLE__
-			/* Whenever OpenBSD is waiting 1 sec, the Linux driver only waits for 100 ms. Some commands
-			   have to result in a timeout error, which makes card mounting slower than it should be.
-			   Hence, we use 100 ms whenever 1 sec is received as timeout. */
-		    Sinetek_rtsx_boot_arg_mimic_linux && secs == 1 ? 100000000 : SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
+		/* Whenever OpenBSD is waiting 1 sec, the Linux driver only waits for 100 ms. Some commands
+		   have to result in a timeout error, which makes card mounting slower than it should be.
+		   Hence, we use 100 ms whenever 1 sec is received as timeout.
+		   Besides, we add a parameter (Sinetek_rtsx_boot_arg_timeout_shift) that will increase (shift) the
+		   timeout, since some commands (MMC_STOP_TRANSMISSION) are giving timeouts (Linux uses 300 ms for
+		   this?) */
+		uint64_t timeout_ns = (Sinetek_rtsx_boot_arg_mimic_linux && secs == 1 ? 100000000 : SEC_TO_NSEC(secs));
+		if (Sinetek_rtsx_boot_arg_timeout_shift > 0)
+			timeout_ns <<= Sinetek_rtsx_boot_arg_timeout_shift;
+		else if (Sinetek_rtsx_boot_arg_timeout_shift < 0)
+			timeout_ns >>= -Sinetek_rtsx_boot_arg_timeout_shift;
+		if (tsleep_nsec(&sc->intr_status, PRIBIO, "rtsxintr", timeout_ns) == EWOULDBLOCK) {
 #else
-		}
+		if (tsleep_nsec(&sc->intr_status, PRIBIO, "rtsxintr",
 		    SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
 #endif
 			rtsx_soft_reset(sc);

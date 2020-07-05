@@ -59,6 +59,7 @@ static IOPMPowerState ourPowerStates[kPowerStateCount] =
 // Use global variables, since these will be accessed from the BSD code
 int Sinetek_rtsx_boot_arg_mimic_linux = 0;
 int Sinetek_rtsx_boot_arg_no_adma = 0;
+int Sinetek_rtsx_boot_arg_timeout_shift = 0;
 
 bool Sinetek_rtsx::init(OSDictionary *dictionary) {
 	if (!super::init()) return false;
@@ -79,7 +80,9 @@ bool Sinetek_rtsx::init(OSDictionary *dictionary) {
 	}
 	Sinetek_rtsx_boot_arg_mimic_linux = (int) PE_parse_boot_argn("-rtsx_mimic_linux", &dummy, sizeof(dummy));
 	Sinetek_rtsx_boot_arg_no_adma = (int)PE_parse_boot_argn("-rtsx_no_adma", &dummy, sizeof(dummy));
+	PE_parse_boot_argn("rtsx_timeout_shift", &Sinetek_rtsx_boot_arg_timeout_shift, sizeof(Sinetek_rtsx_boot_arg_timeout_shift));
 	UTL_LOG("ADMA %s", Sinetek_rtsx_boot_arg_no_adma ? "disabled" : "enabled");
+	UTL_LOG("Timeout shift: %d", Sinetek_rtsx_boot_arg_timeout_shift);
 	UTL_DEBUG_FUN("END");
 	return true;
 }
