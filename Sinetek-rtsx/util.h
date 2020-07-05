@@ -113,13 +113,6 @@ static inline AbsoluteTime nsecs2AbsoluteTimeDeadline(uint64_t nsecs) {
 	return deadline;
 }
 
-static inline AbsoluteTime timo2AbsoluteTimeDeadline(int timo) {
-	extern int hz;
-	uint64_t nsDelay = (uint64_t) timo / hz * 1000000000LL;
-	AbsoluteTime deadline = nsecs2AbsoluteTimeDeadline(nsDelay);
-	return deadline;
-}
-
 #pragma mark -
 #pragma mark Other utility macros
 

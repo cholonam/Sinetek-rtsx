@@ -26,6 +26,9 @@
 extern int Sinetek_rtsx_boot_arg_mimic_linux;
 extern int Sinetek_rtsx_boot_arg_no_adma;
 extern int Sinetek_rtsx_boot_arg_timeout_shift;
+#if DEBUG
+volatile uint16_t waiting_for_cmd_opcode = 0;
+#endif
 #else // __APPLE__
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1416,6 +1419,9 @@ rtsx_xfer_adma(struct rtsx_softc *sc, struct sdmmc_command *cmd)
 	bus_dmamap_sync(sc->dmat, sc->dmap_adma, 0, RTSX_ADMA_DESC_SIZE,
 	    	BUS_DMASYNC_PREWRITE);
 
+#if __APPLE__ && DEBUG
+	waiting_for_cmd_opcode = cmd->c_opcode;
+#endif
 	error = rtsx_xfer_exec(sc, sc->dmap_adma,
 	    RTSX_ADMA_MODE | RTSX_TRIG_DMA | (read ? RTSX_DMA_READ : 0));
 
@@ -1529,8 +1535,12 @@ rtsx_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	/* Run the command queue and wait for completion. */
 	error = rtsx_hostcmd_send(sc, ncmd);
-	if (error == 0)
+	if (error == 0) {
+#if __APPLE__ & DEBUG
+		waiting_for_cmd_opcode = cmd->c_opcode;
+#endif
 		error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 1);
+	}
 	if (error)
 		goto unload_cmdbuf;
 
@@ -1619,7 +1629,18 @@ rtsx_wait_intr(struct rtsx_softc *sc, int mask, int secs)
 			timeout_ns <<= Sinetek_rtsx_boot_arg_timeout_shift;
 		else if (Sinetek_rtsx_boot_arg_timeout_shift < 0)
 			timeout_ns >>= -Sinetek_rtsx_boot_arg_timeout_shift;
+#if DEBUG
+		uint64_t startTime, endTime, elapsed_ns;
+		startTime = mach_absolute_time();
+#endif
 		if (tsleep_nsec(&sc->intr_status, PRIBIO, "rtsxintr", timeout_ns) == EWOULDBLOCK) {
+#if DEBUG
+			endTime = mach_absolute_time();
+			absolutetime_to_nanoseconds(endTime - startTime, &elapsed_ns);
+			UTL_DEBUG_LOOP("WAITED %llu/%llu us (%s) (TIMEOUT!)",
+				(elapsed_ns + 500) / 1000, (timeout_ns + 500) / 1000,
+				mmcCmd2str(waiting_for_cmd_opcode));
+#endif
 #else
 		if (tsleep_nsec(&sc->intr_status, PRIBIO, "rtsxintr",
 		    SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
@@ -1628,6 +1649,12 @@ rtsx_wait_intr(struct rtsx_softc *sc, int mask, int secs)
 			error = ETIMEDOUT;
 			break;
 		}
+#if __APPLE__ && DEBUG
+		endTime = mach_absolute_time();
+		absolutetime_to_nanoseconds(endTime - startTime, &elapsed_ns);
+		UTL_DEBUG_LOOP("WAITED %llu/%llu us (%s)", (elapsed_ns + 500) / 1000, (timeout_ns + 500) / 1000,
+			mmcCmd2str(waiting_for_cmd_opcode));
+#endif
 		status = sc->intr_status & mask;
 	}
 	sc->intr_status &= ~status;
