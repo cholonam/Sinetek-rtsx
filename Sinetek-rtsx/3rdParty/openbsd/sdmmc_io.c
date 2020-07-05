@@ -299,11 +299,7 @@ sdmmc_io_attach(struct sdmmc_softc *sc)
 int
 sdmmc_submatch(struct device *parent, void *match, void *aux)
 {
-#if __APPLE__
-	struct cfdata *cf = (struct cfdata *) match;
-#else
 	struct cfdata *cf = match;
-#endif
 
 	/* Skip the scsibus, it is configured directly. */
 	if (strcmp(cf->cf_driver->cd_name, "scsibus") == 0)
@@ -315,11 +311,7 @@ sdmmc_submatch(struct device *parent, void *match, void *aux)
 int
 sdmmc_print(void *aux, const char *pnp)
 {
-#if __APPLE__
-	struct sdmmc_attach_args *sa = (struct sdmmc_attach_args *) aux;
-#else
 	struct sdmmc_attach_args *sa = aux;
-#endif
 	struct sdmmc_function *sf = sa->sf;
 	struct sdmmc_cis *cis = &sf->sc->sc_fn0->cis;
 	int i;
@@ -782,11 +774,7 @@ sdmmc_intr_establish(struct device *sdmmc, int (*fun)(void *),
 	if (sc->sct->card_intr_mask == NULL)
 		return NULL;
 
-#if __APPLE__
-	ih = (struct sdmmc_intr_handler *) malloc(sizeof *ih, M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
-#else
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK | M_CANFAIL | M_ZERO);
-#endif
 	if (ih == NULL)
 		return NULL;
 
@@ -811,11 +799,7 @@ sdmmc_intr_establish(struct device *sdmmc, int (*fun)(void *),
 void
 sdmmc_intr_disestablish(void *cookie)
 {
-#if __APPLE__
-	struct sdmmc_intr_handler *ih = (struct sdmmc_intr_handler *) cookie;
-#else
 	struct sdmmc_intr_handler *ih = cookie;
-#endif
 	struct sdmmc_softc *sc = ih->ih_softc;
 	int s;
 
@@ -853,11 +837,7 @@ sdmmc_card_intr(struct device *sdmmc)
 void
 sdmmc_intr_task(void *arg)
 {
-#if __APPLE__
-	struct sdmmc_softc *sc = (struct sdmmc_softc *) arg;
-#else
 	struct sdmmc_softc *sc = arg;
-#endif
 	struct sdmmc_intr_handler *ih;
 	int s;
 

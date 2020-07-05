@@ -317,11 +317,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 			sc->flags |= RTSX_F_5229_TYPE_C;
 			break;
 		default:
-#if __APPLE__
-			UTL_ERR("rtsx_init: unknown ic %02x\n", version);
-#else
 			printf("rtsx_init: unknown ic %02x\n", version);
-#endif
 			return (1);
 		}
 	}
@@ -383,11 +379,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 	else
 		error = rtsx_write_phy(sc, 0x00, 0xBA42);
 	if (error) {
-#if __APPLE__
-		UTL_ERR("%s: cannot write phy register\n", DEVNAME(sc));
-#else
 		printf("%s: cannot write phy register\n", DEVNAME(sc));
-#endif
 		return (1);
 	}
 
@@ -588,11 +580,7 @@ rtsx_led_disable(struct rtsx_softc *sc)
 int
 rtsx_host_reset(sdmmc_chipset_handle_t sch)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) sch;
-#else
 	struct rtsx_softc *sc = sch;
-#endif
 	int s;
 
 	DPRINTF(1,("%s: host reset\n", DEVNAME(sc)));
@@ -629,11 +617,7 @@ rtsx_host_maxblklen(sdmmc_chipset_handle_t sch)
 int
 rtsx_card_detect(sdmmc_chipset_handle_t sch)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) sch;
-#else
 	struct rtsx_softc *sc = sch;
-#endif
 
 	return ISSET(sc->flags, RTSX_F_CARD_PRESENT);
 }
@@ -796,11 +780,7 @@ rtsx_switch_sd_clock(struct rtsx_softc *sc, u_int8_t n, int div, int mcu)
 int
 rtsx_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) sch;
-#else
 	struct rtsx_softc *sc = sch;
-#endif
 	int s, error = 0;
 
 	DPRINTF(1,("%s: voltage change ocr=0x%x\n", DEVNAME(sc), ocr));
@@ -848,11 +828,7 @@ ret:
 int
 rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) sch;
-#else
 	struct rtsx_softc *sc = sch;
-#endif
 	int s;
 	u_int8_t n;
 	int div;
@@ -913,11 +889,7 @@ ret:
 int
 rtsx_bus_width(sdmmc_chipset_handle_t sch, int width)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) sch;
-#else
 	struct rtsx_softc *sc = sch;
-#endif
 
 	return rtsx_set_bus_width(sc, width);
 }
@@ -1435,11 +1407,7 @@ rtsx_xfer_adma(struct rtsx_softc *sc, struct sdmmc_command *cmd)
 void
 rtsx_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) sch;
-#else
 	struct rtsx_softc *sc = sch;
-#endif
 	bus_dma_segment_t segs;
 	int rsegs;
 	caddr_t cmdkvap;
@@ -1701,11 +1669,7 @@ rtsx_card_eject(struct rtsx_softc *sc)
 int
 rtsx_intr(void *arg)
 {
-#if __APPLE__
-	struct rtsx_softc *sc = (struct rtsx_softc *) arg;
-#else
 	struct rtsx_softc *sc = arg;
-#endif
 	u_int32_t enabled, status;
 
 	enabled = READ4(sc, RTSX_BIER);

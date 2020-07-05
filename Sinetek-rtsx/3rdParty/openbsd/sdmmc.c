@@ -89,13 +89,8 @@ struct cfdriver sdmmc_cd = {
 int
 sdmmc_match(struct device *parent, void *match, void *aux)
 {
-#if __APPLE__
-	struct cfdata *cf = (struct cfdata *) match;
-	struct sdmmcbus_attach_args *saa = (struct sdmmcbus_attach_args *) aux;
-#else
 	struct cfdata *cf = match;
 	struct sdmmcbus_attach_args *saa = aux;
-#endif
 
 	return strcmp(saa->saa_busname, cf->cf_driver->cd_name) == 0;
 }
@@ -104,11 +99,7 @@ void
 sdmmc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)self;
-#if __APPLE__
-	struct sdmmcbus_attach_args *saa = (struct sdmmcbus_attach_args *) aux;
-#else
 	struct sdmmcbus_attach_args *saa = aux;
-#endif
 	int error;
 
 	if (ISSET(saa->caps, SMC_CAPS_8BIT_MODE))
@@ -213,11 +204,7 @@ sdmmc_activate(struct device *self, int act)
 void
 sdmmc_create_thread(void *arg)
 {
-#if __APPLE__
-	struct sdmmc_softc *sc = (struct sdmmc_softc *) arg;
-#else
 	struct sdmmc_softc *sc = arg;
-#endif
 
 	if (kthread_create(sdmmc_task_thread, sc, &sc->sc_task_thread,
 	    DEVNAME(sc)) != 0)
@@ -228,11 +215,7 @@ sdmmc_create_thread(void *arg)
 void
 sdmmc_task_thread(void *arg)
 {
-#if __APPLE__
-	struct sdmmc_softc *sc = (struct sdmmc_softc *) arg;
-#else
 	struct sdmmc_softc *sc = arg;
-#endif
 	struct sdmmc_task *task;
 	int s;
 
@@ -313,11 +296,7 @@ sdmmc_needs_discover(struct device *self)
 void
 sdmmc_discover_task(void *arg)
 {
-#if __APPLE__
-	struct sdmmc_softc *sc = (struct sdmmc_softc *) arg;
-#else
 	struct sdmmc_softc *sc = arg;
-#endif
 
 	if (sdmmc_chip_card_detect(sc->sct, sc->sch)) {
 		if (!ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
