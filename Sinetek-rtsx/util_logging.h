@@ -63,6 +63,26 @@ do { \
 #define UTL_DEBUG_INT(...)  UTL_DEBUG(UTL_DEBUG_LVL_INT,  "[INT] " __VA_ARGS__)
 #define UTL_DEBUG_LOOP(...) UTL_DEBUG(UTL_DEBUG_LVL_LOOP, "[LOOP] " __VA_ARGS__)
 
+// Loggint of BIPR register
+#define RTSX_BIPR_FMT "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s"
+#define RTSX_BIPR_FMT_VAR(bipr) \
+	(bipr & RTSX_TRANS_OK_INT) ? " (TRANS OK)" : "", \
+	(bipr & RTSX_TRANS_FAIL_INT) ? " (TRANS FAIL)" : "", \
+	(bipr & RTSX_CMD_DONE_INT) ? " CMDDONE" : "", \
+	(bipr & RTSX_DATA_DONE_INT) ? " DATADONE" : "", \
+	(bipr & RTSX_TRANS_OK_INT) ? " XOK" : "", \
+	(bipr & RTSX_TRANS_FAIL_INT) ? " XFAIL" : "", \
+	(bipr & RTSX_XD_INT) ? " XD" : "", \
+	(bipr & RTSX_MS_INT) ? " MS" : "", \
+	(bipr & RTSX_SD_INT) ? " SD" : "", \
+	(bipr & RTSX_GPIO0_INT_EN) ? " GPIO0" : "", \
+	(bipr & RTSX_MS_OC_INT_EN) ? " MSOC" : "", \
+	(bipr & RTSX_SD_OC_INT_EN) ? " SDOC" : "", \
+	(bipr & RTSX_SD_WRITE_PROTECT) ? " WRITE_PROT" : "", \
+	(bipr & RTSX_XD_EXIST) ? " XD_EXIST" : "", \
+	(bipr & RTSX_MS_EXIST) ? " MS_EXIST" : "", \
+	(bipr & RTSX_SD_EXIST) ? " SD_EXIST" : ""
+
 static inline const char *mmcCmd2str(uint16_t mmcCmd) {
 	switch (mmcCmd) {
 

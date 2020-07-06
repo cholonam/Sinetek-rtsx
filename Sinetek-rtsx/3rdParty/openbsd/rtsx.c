@@ -1681,24 +1681,8 @@ rtsx_intr(void *arg)
 #if __APPLE__
 	// Log interrupt
 	if (status && status != RTSX_SD_EXIST && status != 0xffffffff) {
-		UTL_DEBUG_INT("%s: INTERRUPT: STATUS = 0x%08x ENABLED = 0x%08x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
-			    DEVNAME(sc), status, enabled,
-			    (status & RTSX_TRANS_OK_INT) ? " (TRANS OK)" : "",
-			    (status & RTSX_TRANS_FAIL_INT) ? " (TRANS FAIL)" : "",
-			    (status & RTSX_CMD_DONE_INT) ? " CMDDONE" : "",
-			    (status & RTSX_DATA_DONE_INT) ? " DATADONE" : "",
-			    (status & RTSX_TRANS_OK_INT) ? " XOK" : "",
-			    (status & RTSX_TRANS_FAIL_INT) ? " XFAIL" : "",
-			    (status & RTSX_XD_INT) ? " XD" : "",
-			    (status & RTSX_MS_INT) ? " MS" : "",
-			    (status & RTSX_SD_INT) ? " SD" : "",
-			    (status & RTSX_GPIO0_INT_EN) ? " GPIO0" : "",
-			    (status & RTSX_MS_OC_INT_EN) ? " MSOC" : "",
-			    (status & RTSX_SD_OC_INT_EN) ? " SDOC" : "",
-			    (status & RTSX_SD_WRITE_PROTECT) ? " WRITE_PROT" : "",
-			    (status & RTSX_XD_EXIST) ? " XD_EXIST" : "",
-			    (status & RTSX_MS_EXIST) ? " MS_EXIST" : "",
-			    (status & RTSX_SD_EXIST) ? " SD_EXIST" : "");
+		UTL_DEBUG_INT("%s: INTERRUPT: STATUS = 0x%08x ENABLED = 0x%08x" RTSX_BIPR_FMT "\n",
+			      DEVNAME(sc), status, enabled, RTSX_BIPR_FMT_VAR(status));
 	}
 #endif
 
