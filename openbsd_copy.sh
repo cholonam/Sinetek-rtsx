@@ -7,19 +7,11 @@ function my_copy() {
 	DIR1="$1"
 	DIR2="$2"
 
-	echo "Copying files from '$DIR1' into '$DIR2' (.c)..."
-	for i in $DIR1/*.c; do
-		file="${i##*/}"
-		file_ne="`basename $file .c`"
-		if [ -e "$DIR2/$file_ne.cpp" ]; then
-			cp "$DIR1/$file" "$DIR2/$file_ne.cpp"
-		fi
-	done
-	echo "Copying files from '$DIR1' into '$DIR2' (.h)..."
-	for i in $DIR1/*.h; do
+	echo "Copying files from '$DIR1' into '$DIR2'"
+	for i in "$DIR1/"*; do
 		file="${i##*/}"
 		if [ -e "$DIR2/$file" ]; then
-			cp "$DIR1/$file" "$DIR2/$file"
+			cp "$i" "$DIR2/$file"
 		fi
 	done
 }
@@ -33,7 +25,7 @@ if [ "$resp" != "YES" ]; then
 fi
 
 DIR1="$HOME/Downloads/src-master/sys/dev/sdmmc"
-DIR2="`dirname $0`/Sinetek-rtsx"
+DIR2="`dirname $0`/Sinetek-rtsx/3rdParty/openbsd"
 my_copy "$DIR1" "$DIR2"
 
 DIR1="$HOME/Downloads/src-master/sys/dev/ic"

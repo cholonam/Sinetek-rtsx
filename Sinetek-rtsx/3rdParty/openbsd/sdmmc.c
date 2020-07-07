@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.54 2019/12/31 10:05:33 mpi Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.55 2020/05/13 17:31:16 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -32,6 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -585,10 +586,8 @@ sdmmc_delay(u_int usecs)
 #if __APPLE__
 	delay(usecs);
 #else
-	int nticks = usecs / (1000000 / hz);
-
-	if (!cold && nticks > 0)
-		tsleep(&sdmmc_delay, PWAIT, "mmcdly", nticks);
+	if (!cold && usecs > tick)
+		tsleep_nsec(&sdmmc_delay, PWAIT, "mmcdly", USEC_TO_NSEC(usecs));
 	else
 		delay(usecs);
 #endif

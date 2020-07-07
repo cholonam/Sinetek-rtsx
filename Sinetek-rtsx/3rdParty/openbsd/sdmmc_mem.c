@@ -565,18 +565,13 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	rw_assert_wrlock(&sc->sc_lock);
 
 	if (sdmmc_select_card(sc, sf) != 0 ||
-	    sdmmc_mem_set_blocklen(sc, sf) != 0) {
-		UTL_ERR("select_card/set_blocklen failed!");
+	    sdmmc_mem_set_blocklen(sc, sf) != 0)
 		error = 1;
-	}
 
-	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
-		UTL_DEBUG_DEF("Initializing SD memory...");
+	if (ISSET(sc->sc_flags, SMF_SD_MODE))
 		error = sdmmc_mem_sd_init(sc, sf);
-	} else {
-		UTL_DEBUG_DEF("Initializing MMC memory...");
+	else
 		error = sdmmc_mem_mmc_init(sc, sf);
-	}
 
 	return error;
 }

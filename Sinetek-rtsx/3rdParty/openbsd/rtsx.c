@@ -232,11 +232,10 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	saa.sct = &rtsx_functions;
 	saa.sch = sc;
 	saa.flags = SMF_STOP_AFTER_MULTIPLE;
+	saa.caps = SMC_CAPS_4BIT_MODE | SMC_CAPS_DMA;
 #if __APPLE__
-	// ADMA not supported yet
-	saa.caps = SMC_CAPS_4BIT_MODE;
-	if (!Sinetek_rtsx_boot_arg_no_adma)
-		saa.caps |= SMC_CAPS_DMA;
+	if (Sinetek_rtsx_boot_arg_no_adma)
+		saa.caps &= ~SMC_CAPS_DMA;
 #endif
 	saa.dmat = sc->dmat;
 
@@ -449,68 +448,6 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 		/* Set default OLT blink period. */
 		RTSX_SET(sc, RTSX_OLT_LED_CTL, RTSX_OLT_LED_PERIOD);
 	}
-
-#if __APPLE__
-	// try not affect other chips...
-	if (!Sinetek_rtsx_boot_arg_mimic_linux || (sc->flags & RTSX_F_525A) == 0)
-		return 0;
-
-	// rts5249_extra_init_hw
-
-	/* Rest L1SUB Config */
-	RTSX_WRITE(sc, 0xfe8f, 0x00); // L1SUB_CONFIG3
-	/* Configure GPIO as output */
-	UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_GPIO_CTL, 0x02, 0x02)); // GPIO_CTL
-	/* Reset ASPM state to default value */
-	UTL_CHK_SUCCESS(rtsx_write(sc, 0xfe57, 0x3F, 0)); // ASPM_FORCE_CTL
-	/* Switch LDO3318 source from DV33 to card_3v3 */
-	UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_LDO_PWR_SEL, 0x03, 0x00));
-	UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_LDO_PWR_SEL, 0x03, 0x01));
-	/* LED shine disabled, set initial shine cycle period */
-	UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_OLT_LED_CTL, 0x0F, 0x02));
-
-	// configure driving (for me, drive_sel = 3)
-	RTSX_WRITE(sc, 0xfd5a, 0x96); // SD30_CLK_DRIVE_SEL
-	RTSX_WRITE(sc, 0xfd5e, 0x96); // SD30_CMD_DRIVE_SEL
-	RTSX_WRITE(sc, 0xfd5f, 0x96); // SD30_DAT_DRIVE_SEL
-
-	{
-		int rtsx_read_cfg(struct rtsx_softc *sc, u_int8_t func, u_int16_t addr, u_int32_t *val);
-		u_int32_t val;
-		if (rtsx_read_cfg(sc, 0, 0x814, &val) == 0) {
-			if (val & 0x4000) {
-				sc->flags |= RTSX_F_REVERSE_SOCKET;
-			}
-		}
-		sc->flags |= RTSX_F_FORCE_CLKREQ_0; // TODO: check this...
-	}
-
-	if (sc->flags & RTSX_F_REVERSE_SOCKET) {
-		UTL_LOG("Reverse socket found");
-		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_PETXCFG, 0xb0, 0xb0));
-	} else {
-		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_PETXCFG, 0xb0, 0x80));
-	}
-	if (sc->flags & RTSX_F_FORCE_CLKREQ_0) {
-		UTL_LOG("FORCE_CLKREQ_0 found");
-		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_PETXCFG, 0x80, 0x80));
-	} else {
-		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_PETXCFG, 0x80, 0x00));
-	}
-
-	// rts525a_extra_init_hw
-
-	UTL_CHK_SUCCESS(rtsx_write(sc, 0xFE55, 0x20, 0x20));
-	if (sc->flags & RTSX_F_525A_TYPE_A) {
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFE8E, 0x02, 0x02));
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF6C, 0x38, 0x28));
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF75, 0x07, 0x03));
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF76, 0x07, 0x04));
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF77, 0x07, 0x04));
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF72, 0x30, 0x10));
-		UTL_CHK_SUCCESS(rtsx_write(sc, 0xFF6E, 0x9F, 0x89));
-	}
-#endif
 
 	return (0);
 }
@@ -918,7 +855,6 @@ rtsx_read(struct rtsx_softc *sc, u_int16_t addr, u_int8_t *val)
 		UTL_DEBUG_CMD("RTSX_READ:  addr: 0x%04x val: 0x%02x (tries: %d)", addr, *val, 1024 - tries);
 	}
 #endif
-	if (!tries) UTL_ERR("Returning ETIMEDOUT (addr=0x%04x)!", addr);
 	return (tries == 0) ? ETIMEDOUT : 0;
 }
 
@@ -1503,12 +1439,15 @@ rtsx_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	/* Run the command queue and wait for completion. */
 	error = rtsx_hostcmd_send(sc, ncmd);
+#if __APPLE__ && DEBUG
 	if (error == 0) {
-#if __APPLE__ & DEBUG
 		waiting_for_cmd_opcode = cmd->c_opcode;
-#endif
 		error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 1);
 	}
+#else
+	if (error == 0)
+		error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 1);
+#endif
 	if (error)
 		goto unload_cmdbuf;
 
