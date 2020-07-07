@@ -1316,6 +1316,19 @@ rtsx_xfer_adma(struct rtsx_softc *sc, struct sdmmc_command *cmd)
 		desc = htole64((paddr << 32) | (len << 12) | sgflags);
 		memcpy(descp, &desc, sizeof(*descp));
 		descp++;
+#if __APPLE__ && DEBUG
+#if 0 // Too verbose, disable for now
+		if (i > 0) { // if there is more than one segment
+			if (i == 1) { // dump first segment
+				UTL_DEBUG_LOOP(" - S/G List [0]: %016llx (addr: %08llx len: %llu)",
+					((uint64_t *)sc->admabuf)[0], cmd->c_dmamap->dm_segs[0].ds_addr,
+					cmd->c_dmamap->dm_segs[0].ds_len);
+			}
+			UTL_DEBUG_LOOP(" - S/G List [%d]: %016llx (addr: %08llx len: %llu)", i, ((uint64_t *)sc->admabuf)[i],
+				cmd->c_dmamap->dm_segs[i].ds_addr, cmd->c_dmamap->dm_segs[i].ds_len);
+		}
+#endif
+#endif
 	}
 
 	error = bus_dmamap_load(sc->dmat, sc->dmap_adma, sc->admabuf,
@@ -1530,7 +1543,11 @@ rtsx_wait_intr(struct rtsx_softc *sc, int mask, int secs)
 		   Hence, we use 100 ms whenever 1 sec is received as timeout.
 		   Besides, we add a parameter (Sinetek_rtsx_boot_arg_timeout_shift) that will increase (shift) the
 		   timeout, since some commands (MMC_STOP_TRANSMISSION) are giving timeouts (Linux uses 300 ms for
-		   this?) */
+		   this?)
+		   In Linux, this method is IN rtsx_pci_send_cmd(), which is equivalent to OpenBSD's
+		     rtsx_hostcmd_send() +
+		     rtsx_wait_intr()
+		 */
 		uint64_t timeout_ns = (Sinetek_rtsx_boot_arg_mimic_linux && secs == 1 ? 100000000 : SEC_TO_NSEC(secs));
 		if (Sinetek_rtsx_boot_arg_timeout_shift > 0)
 			timeout_ns <<= Sinetek_rtsx_boot_arg_timeout_shift;

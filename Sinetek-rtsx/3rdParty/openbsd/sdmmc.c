@@ -867,6 +867,8 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 			      "(OK)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
 			      cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "");
 	}
+	if (cmd->c_opcode == MMC_SEND_STATUS)
+		UTL_DEBUG_CMD("CARD STATUS: 0x%08x", MMC_R1(cmd->c_resp));
 #else
 	DPRINTF(1,("%s: cmd %u arg=%#x data=%p dlen=%d flags=%#x "
 	    "proc=\"%s\" (error %d)\n", DEVNAME(sc), cmd->c_opcode,
