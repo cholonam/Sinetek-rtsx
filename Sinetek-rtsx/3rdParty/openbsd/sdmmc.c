@@ -489,6 +489,13 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 	host_ocr &= card_ocr;
 	for (bit = 4; bit < 23; bit++) {
 		if (ISSET(host_ocr, 1<<bit)) {
+#if __APPLE__
+			int dec_volt_min = 16 + (bit - 4);
+			int dec_volt_max = dec_volt_min + 1;
+			UTL_LOG("Minimum voltage supported by card and host: %d.%d-%d.%d",
+				dec_volt_min / 10, dec_volt_min % 10,
+				dec_volt_max / 10, dec_volt_max % 10);
+#endif
 			host_ocr &= 3<<bit;
 			break;
 		}
@@ -642,7 +649,7 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 #endif
 
 	error = cmd->c_error;
-#if __APPLE__
+#if __APPLE__ && !SDMMC_DEBUG
 	void sdmmc_dump_command(struct sdmmc_softc *, struct sdmmc_command *);
 
 	if (error)
@@ -835,6 +842,52 @@ exec_done:
 #endif
 
 #if __APPLE__
+/**
+ * Run the MMC_SEND_STATUS command and print the status.
+ */
+static void get_status(struct sdmmc_softc *sc)
+{
+	struct sdmmc_command status_cmd = {};
+	unsigned int retries = 2;
+	
+	UTL_CHK_PTR(sc, );
+	
+	if (sc->sc_card == NULL || sc->sc_card->rca == 0)
+		return; // no card, or card does not have an address yet!
+
+	status_cmd.c_opcode = MMC_SEND_STATUS;
+	status_cmd.c_arg = MMC_ARG_RCA(sc->sc_card->rca);
+	status_cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+	do {
+		sdmmc_chip_exec_command(sc->sct, sc->sch, &status_cmd);
+		if (!status_cmd.c_error) {
+			dump_status(MMC_R1(status_cmd.c_resp));
+		} else {
+			UTL_ERR("ISSUED CARD STATUS: MMC_SEND_STATUS failed (error = %d, %d retries left)",
+				status_cmd.c_error, retries);
+		}
+	} while (status_cmd.c_error && retries--);
+}
+
+static void sprint_resp(struct sdmmc_command * cmd, char *buf, size_t bufsiz)
+{
+	int i, cnt;
+	char *buf2 = buf;
+	size_t bufsiz2 = bufsiz;
+	size_t size_resp = 0;
+
+	if (ISSET(cmd->c_flags, SCF_RSP_136)) {
+		for (i = 0; i < sizeof(cmd->c_resp); i++) {
+			cnt = snprintf(buf2, bufsiz2, i ? " %02x" : "%02x", ((u_char *)cmd->c_resp)[i]);
+			if (cnt < 0 || cnt >= bufsiz2) break;
+			buf2 += cnt;
+			bufsiz2 -= cnt;
+		}
+	} else if (ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
+		snprintf(buf2, bufsiz2, "0x%08x", cmd->c_resp[0]);
+	}
+}
+
 #if !SDMMC_DEBUG
 #define SDMMC_DEBUG 1
 int sdmmcdebug = 0;
@@ -863,12 +916,16 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 			cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "", cmd->c_error,
 			ok_msg);
 	} else {
-		UTL_DEBUG_CMD("%s: cmd %u (%s) arg=%#x data=%p dlen=%d flags=%#x proc=\"%s\" "
-			      "(OK)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
-			      cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "");
+		const size_t bufsiz = 4 * sizeof(uint32_t) * 3 + 1;
+		char buf[bufsiz];
+		sprint_resp(cmd, buf, bufsiz);
+		UTL_DEBUG_CMD("%s: cmd %u (%s) arg=%#x data=%p dlen=%d flags=%#x (OK) => [%s]\n", DEVNAME(sc),
+			      cmd->c_opcode, mmcCmd2str(cmd->c_opcode), cmd->c_arg, cmd->c_data, cmd->c_datalen,
+			      cmd->c_flags, buf);
+		if (cmd->c_opcode == MMC_SEND_STATUS) {
+			dump_status(MMC_R1(cmd->c_resp));
+		}
 	}
-	if (cmd->c_opcode == MMC_SEND_STATUS)
-		UTL_DEBUG_CMD("CARD STATUS: 0x%08x", MMC_R1(cmd->c_resp));
 #else
 	DPRINTF(1,("%s: cmd %u arg=%#x data=%p dlen=%d flags=%#x "
 	    "proc=\"%s\" (error %d)\n", DEVNAME(sc), cmd->c_opcode,

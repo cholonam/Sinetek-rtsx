@@ -128,4 +128,25 @@ static inline const char *busSpaceReg2str(IOByteCount offset) {
 }
 #endif // DEBUG
 
+static const char *stat_str[] = {
+	"IDLE", "READY", "IDENT", "STBY", "TRAN", "DATA", "RCV", "PRG", "DIS"
+};
+
+/**
+ * Dump the status dword received from the MMC_SEND_STATUS command.
+ */
+static inline void dump_status(uint32_t status)
+{
+	unsigned state = (status >> 9) & 0xf;
+	bool ready_for_data = status & (1 << 8);
+#if DEBUG
+	UTL_LOG("CARD STATUS: 0x%08x %s%s", status, state > 8 ? " ??" : stat_str[state],
+		ready_for_data ? " (READY FOR DATA)" : " (NOT READY FOR DATA)");
+#else
+	if (status != 0x00000900) // TRAN and ready for data
+		UTL_LOG("CARD STATUS: 0x%08x %s%s", status, state > 8 ? " ??" : stat_str[state],
+			ready_for_data ? " (READY FOR DATA)" : " (NOT READY FOR DATA)");
+#endif
+}
+
 #endif /* SINETEK_RTSX_UTIL_LOGGING_H */

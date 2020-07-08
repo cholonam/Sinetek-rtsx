@@ -151,8 +151,12 @@ void	rtsx_save_regs(struct rtsx_softc *);
 void	rtsx_restore_regs(struct rtsx_softc *);
 
 #ifdef RTSX_DEBUG
+#if __APPLE__
+#define DPRINTF(n,s)	UTL_DEBUG_DEF s;
+#else
 int rtsxdebug = 0;
 #define DPRINTF(n,s)	do { if ((n) <= rtsxdebug) printf s; } while (0)
+#endif
 #else
 #define DPRINTF(n,s)	do {} while(0)
 #endif
@@ -847,7 +851,7 @@ rtsx_read(struct rtsx_softc *sc, u_int16_t addr, u_int8_t *val)
 	}
 
 	*val = (reg & 0xff);
-#if __APPLE__ && DEBUG
+#if __APPLE__ && DEBUG && 0
 	if (addr != RTSX_PHY_DATA0 &&
 	    addr != RTSX_PHY_DATA1 &&
 	    addr != RTSX_PHY_ADDR &&
@@ -1226,6 +1230,10 @@ rtsx_xfer(struct rtsx_softc *sc, struct sdmmc_command *cmd, u_int32_t *cmdbuf)
 		error = rtsx_xfer_bounce(sc, cmd);
 ret:
 	DPRINTF(3,("%s: xfer done, error=%d\n", DEVNAME(sc), error));
+#if __APPLE__
+	if (error)
+		UTL_ERR("xfer error(%s): %d", cmd->c_dmamap ? "ADMA" : "bounce", error);
+#endif
 	return error;
 }
 

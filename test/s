@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEV="/dev/disk3"
+DEV="/dev/rdisk3"
 # 1 MiB
 NBYTES=$((1 * 1024 * 1024))
 
@@ -8,7 +8,7 @@ NBYTES=$((1 * 1024 * 1024))
 sudo true
 
 echo "Read speed..."
-for bs in 512 4096 65536; do
+for bs in 512 4096 65536 131072; do
 	echo "-> Block size: $bs"
 	sudo dd if="$DEV" of=/dev/null bs=$bs count=$((NBYTES/bs)) 2>&1 | grep -v ' records '
 done
