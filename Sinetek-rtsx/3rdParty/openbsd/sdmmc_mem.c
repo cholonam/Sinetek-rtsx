@@ -20,6 +20,8 @@
 
 #if __APPLE__
 #include "compat/openbsd.h"
+#include "util.h"
+extern int Sinetek_rtsx_boot_arg_mimic_linux;
 #else
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,6 +130,13 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 	sdmmc_go_idle_state(sc);
 
 	host_ocr &= card_ocr; /* only allow the common voltages */
+	
+#if __APPLE__
+	if (Sinetek_rtsx_boot_arg_mimic_linux) {
+		// Linux waits some milliseconds
+		IOSleep(3);
+	}
+#endif
 
 	if (sdmmc_send_if_cond(sc, card_ocr) == 0)
 		host_ocr |= SD_OCR_SDHC_CAP;
@@ -932,8 +941,16 @@ sdmmc_mem_read_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	cmd.c_dmamap = dmap;
 
 	error = sdmmc_mmc_command(sc, &cmd);
+#if __APPLE__
+	if (!Sinetek_rtsx_boot_arg_mimic_linux) {
+		// Linux always sends the STOP_TRANSMISSION command
+		if (error != 0)
+			goto err;
+	}
+#else
 	if (error != 0)
 		goto err;
+#endif
 
 	if (ISSET(sc->sc_flags, SMF_STOP_AFTER_MULTIPLE) &&
 	    cmd.c_opcode == MMC_READ_BLOCK_MULTIPLE) {
@@ -1029,6 +1046,9 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
 	int error;
+#if __APPLE__
+	int wr_error = 0;
+#endif
 
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		goto err;
@@ -1047,8 +1067,12 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	cmd.c_dmamap = dmap;
 
 	error = sdmmc_mmc_command(sc, &cmd);
+#if __APPLE__
+	wr_error = error; // save error
+#else
 	if (error != 0)
 		goto err;
+#endif
 
 	if (ISSET(sc->sc_flags, SMF_STOP_AFTER_MULTIPLE) &&
 	    cmd.c_opcode == MMC_WRITE_BLOCK_MULTIPLE) {
@@ -1072,7 +1096,12 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
 
 err:
+#if __APPLE__
+	// return wr_error if it was an error, otherwise just return error
+	return wr_error ? wr_error : error;
+#else
 	return (error);
+#endif
 }
 
 int

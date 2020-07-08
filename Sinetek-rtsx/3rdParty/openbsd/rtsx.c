@@ -543,6 +543,10 @@ rtsx_host_reset(sdmmc_chipset_handle_t sch)
 u_int32_t
 rtsx_host_ocr(sdmmc_chipset_handle_t sch)
 {
+#if __APPLE__
+	if (Sinetek_rtsx_boot_arg_mimic_linux)
+		return MMC_OCR_1_65V_1_95V | MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V;
+#endif
 	return RTSX_SUPPORT_VOLTAGE;
 }
 
@@ -735,7 +739,12 @@ rtsx_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 	if (error)
 		goto ret;
 
+#if __APPLE__
+	/* Linux waits up to 5 milliseconds */
+	delay(Sinetek_rtsx_boot_arg_mimic_linux ? 5000 : 200);
+#else
 	delay(200);
+#endif
 
 	/* If power is disabled, reset the host and return now. */
 	if (ocr == 0) {
@@ -1500,6 +1509,11 @@ rtsx_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			if (rtsx_read(sc, RTSX_SD_STAT1, &stat1) == 0 &&
 			    (stat1 & RTSX_SD_CRC_ERR))
 				printf("%s: CRC error\n", DEVNAME(sc));
+#if __APPLE__
+			if (Sinetek_rtsx_boot_arg_mimic_linux) {
+				rtsx_soft_reset(sc);
+			}
+#endif
 		}
 	}
 
@@ -1523,8 +1537,16 @@ rtsx_soft_reset(struct rtsx_softc *sc)
 	/* Stop command transfer. */
 	WRITE4(sc, RTSX_HCBCTLR, RTSX_STOP_CMD);
 
+#if __APPLE__
+	if (!Sinetek_rtsx_boot_arg_mimic_linux) {
+		// Linux does not do this...
+		(void)rtsx_write(sc, RTSX_CARD_STOP, RTSX_SD_STOP|RTSX_SD_CLR_ERR,
+				 RTSX_SD_STOP|RTSX_SD_CLR_ERR);
+	}
+#else
 	(void)rtsx_write(sc, RTSX_CARD_STOP, RTSX_SD_STOP|RTSX_SD_CLR_ERR,
 		    RTSX_SD_STOP|RTSX_SD_CLR_ERR);
+#endif
 
 	/* Stop DMA transfer. */
 	WRITE4(sc, RTSX_HDBCTLR, RTSX_STOP_DMA);
