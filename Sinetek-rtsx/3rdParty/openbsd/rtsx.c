@@ -396,7 +396,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 		RTSX_CLR(sc, RTSX_CHANGE_LINK_STATE,
 		    RTSX_FORCE_RST_CORE_EN | RTSX_NON_STICKY_RST_N_DBG /* | 0x04 MIMMIC LINUX */);
 		if (sc->flags & (RTSX_F_5229 | RTSX_F_525A)) {
-			RTSX_WRITE(sc, 0xFD53 /* CARD_DRIVE_SEL */, 0x21); // MS_DRIVE_8mA|GPIO_DRIVE_8mA
+			RTSX_WRITE(sc, 0xFD53 /* CARD_DRIVE_SEL */, 0x41); // MS_DRIVE_8mA|GPIO_DRIVE_8mA
 		}
 #if DEBUG
 		// only for debugging purposes
