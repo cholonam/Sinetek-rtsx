@@ -122,4 +122,16 @@ static inline AbsoluteTime nsecs2AbsoluteTimeDeadline(uint64_t nsecs) {
 #define xUTL_STRINGIZE(str) #str
 #define UTL_STRINGIZE(str) xUTL_STRINGIZE(str)
 
+#define UTL_RUN_WITH_RETRY(retries, function, args...) \
+({ \
+	int RUN_WITH_RETRY_error = 0; \
+	unsigned RUN_WITH_RETRY_retr = retries; \
+	do { \
+		RUN_WITH_RETRY_error = function(args); \
+		if (RUN_WITH_RETRY_error == 0) break; \
+		UTL_ERR("%s: Got error %d. %d retries left...", #function, RUN_WITH_RETRY_error, RUN_WITH_RETRY_retr); \
+	} while (RUN_WITH_RETRY_retr--); \
+	RUN_WITH_RETRY_error; \
+})
+
 #endif /* SINETEK_RTSX_UTIL_H */

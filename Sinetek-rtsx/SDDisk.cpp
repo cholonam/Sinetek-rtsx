@@ -342,7 +342,7 @@ void read_task_impl_(void *_args)
 		IOByteCount sendByteCount = remainingBytes > maxSendBytes ? maxSendBytes : remainingBytes;
 
 		if (args->direction == kIODirectionIn) {
-			error = sdmmc_mem_read_block(sdmmc->sc_fn0, blocks, buf, sendByteCount);
+			error = UTL_RUN_WITH_RETRY(3, sdmmc_mem_read_block, sdmmc->sc_fn0, blocks, buf, sendByteCount);
 			if (error)
 				break;
 			IOByteCount copied_bytes = args->buffer->writeBytes(sentBytes, buf, sendByteCount);
@@ -356,7 +356,7 @@ void read_task_impl_(void *_args)
 				error = EIO;
 				break;
 			}
-			error = sdmmc_mem_write_block(sdmmc->sc_fn0, blocks, buf, sendByteCount);
+			error = UTL_RUN_WITH_RETRY(3, sdmmc_mem_write_block, sdmmc->sc_fn0, blocks, buf, sendByteCount);
 			if (error)
 				break;
 		}
