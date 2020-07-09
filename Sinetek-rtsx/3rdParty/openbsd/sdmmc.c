@@ -915,6 +915,10 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 			"(error %d%s)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),
 			cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags, "", cmd->c_error,
 			ok_msg);
+		if (cmd->c_opcode != MMC_SEND_STATUS) {
+			/* request status and dump it */
+			get_status(sc);
+		}
 	} else {
 		const size_t bufsiz = 4 * sizeof(uint32_t) * 3 + 1;
 		char buf[bufsiz];
