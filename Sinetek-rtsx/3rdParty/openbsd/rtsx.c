@@ -203,11 +203,13 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	if (rtsx_init(sc, 1))
 		return 1;
 
+#if !__APPLE__
 	if (rtsx_read_cfg(sc, 0, RTSX_SDIOCFG_REG, &sdio_cfg) == 0) {
 		if ((sdio_cfg & RTSX_SDIOCFG_SDIO_ONLY) ||
 		    (sdio_cfg & RTSX_SDIOCFG_HAVE_SDIO))
 			sc->flags |= RTSX_F_SDIO_SUPPORT;
 	}
+#endif
 
 	if (bus_dmamap_create(sc->dmat, RTSX_HOSTCMD_BUFSIZE, 1,
 	    RTSX_DMA_MAX_SEGSIZE, 0, BUS_DMA_NOWAIT,

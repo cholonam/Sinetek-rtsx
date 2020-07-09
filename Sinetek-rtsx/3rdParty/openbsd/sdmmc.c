@@ -441,9 +441,14 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	/* XXX wait for card to power up */
 	sdmmc_delay(250000);
 
+#if __APPLE__
+	/* WE DON'T NEED IO FUNCTIONS! */
+	SET(sc->sc_flags, SMF_SD_MODE | SMF_MEM_MODE);
+#else
 	/* Initialize SD I/O card function(s). */
 	if ((error = sdmmc_io_enable(sc)) != 0)
 		goto err;
+#endif
 
 	/* Initialize SD/MMC memory card(s). */
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
@@ -670,12 +675,21 @@ sdmmc_go_idle_state(struct sdmmc_softc *sc)
 	struct sdmmc_command cmd;
 
 	rw_assert_wrlock(&sc->sc_lock);
+	
+#if __APPLE__
+	// Linux sleeps here (also calls sdmmc_set_ios()
+	IOSleep(1);
+#endif
 
 	bzero(&cmd, sizeof cmd);
 	cmd.c_opcode = MMC_GO_IDLE_STATE;
 	cmd.c_flags = SCF_CMD_BC | SCF_RSP_R0;
 
 	(void)sdmmc_mmc_command(sc, &cmd);
+#if __APPLE__
+	// Linux sleeps here (also calls sdmmc_set_ios()
+	IOSleep(2);
+#endif
 }
 
 /*
@@ -685,7 +699,11 @@ int
 sdmmc_send_if_cond(struct sdmmc_softc *sc, uint32_t card_ocr)
 {
 	struct sdmmc_command cmd;
+#if __APPLE__
+	uint8_t pat = 0xaa;	/* recommended pattern as per SPEC */
+#else
 	uint8_t pat = 0x23;	/* any pattern will do here */
+#endif
 	uint8_t res;
 
 	rw_assert_wrlock(&sc->sc_lock);
