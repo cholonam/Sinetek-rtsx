@@ -23,6 +23,7 @@
 
 #if __APPLE__
 #include "compat/openbsd.h"
+#include "3rdParty/linux/drivers/misc/cardreader/rts_pcr.h" /* rtsx_base_fetch_vendor_settings */
 extern int Sinetek_rtsx_boot_arg_mimic_linux;
 extern int Sinetek_rtsx_boot_arg_no_adma;
 extern int Sinetek_rtsx_boot_arg_timeout_shift;
@@ -266,40 +267,6 @@ destroy_cmd:
 	return 1;
 }
 
-#if __APPLE__ && DEBUG
-// See: https://github.com/torvalds/linux/blob/master/drivers/misc/cardreader/rts5249.c
-static void rtsx_base_fetch_vendor_settings(struct rtsx_softc *pcr)
-{
-	int rtsx_read_cfg(struct rtsx_softc *sc, u_int8_t func, u_int16_t addr, u_int32_t *val);
-	uint32_t reg;
-
-	rtsx_read_cfg(pcr, 0, 0x724 /* PCR_SETTING_REG1 */, &reg);
-	UTL_LOG("Cfg 0x%x: 0x%x\n", 0x724, reg);
-
-	if (reg & 0x1000000) {
-		UTL_LOG("skip fetch vendor setting\n");
-		return;
-	}
-
-	UTL_LOG("ASPM_EN: %d, sd30_drive_sel_1v8: %d, card_drive_sel: %d",
-		(reg >> 28) & 0x03,
-		(reg >> 26) & 0x03,
-		((reg >> 25) & 0x01) << 6);
-//	pcr->sd30_drive_sel_1v8 = rtsx_reg_to_sd30_drive_sel_1v8(reg);
-//	pcr->card_drive_sel &= 0x3F;
-//	pcr->card_drive_sel |= rtsx_reg_to_card_drive_sel(reg);
-
-	rtsx_read_cfg(pcr, 0, 0x814 /* PCR_SETTING_REG2 */, &reg);
-	UTL_LOG("Cfg 0x%x: 0x%x\n", 0x814, reg);
-	UTL_LOG("sd30_drive_sel_3v3: %d, reverse_socket: %d",
-		(reg >> 5) & 0x03,
-		reg & 0x4000);
-//	pcr->sd30_drive_sel_3v3 = rtsx_reg_to_sd30_drive_sel_3v3(reg);
-//	if (rtsx_reg_check_reverse_socket(reg))
-//		pcr->flags |= PCR_REVERSE_SOCKET;
-}
-#endif
-
 // cholonam: See linux function rtsx_pci_init_hw
 int
 rtsx_init(struct rtsx_softc *sc, int attaching)
@@ -327,7 +294,8 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 #if __APPLE__
 	else if (sc->flags & RTSX_F_525A) {
 		/* Bug: When RTSX_DUMMY_REG is read more than once, it seems it may return 0x00 after the first time.
-		 *      Therefore, we use a static variable to make sure we only read it once. */
+		 *      Therefore, we use a static variable to make sure we only read it once (same for vendor
+		 *      settings). */
 		static bool read = false;
 		if (!read) {
 			read = true;
@@ -339,6 +307,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 			}
 			if ((version & 0x0F) == RTSX_IC_VERSION_A)
 				sc->flags |= RTSX_F_525A_TYPE_A;
+			rtsx_base_fetch_vendor_settings(sc);
 		}
 	}
 #endif /* __APPLE__ */
@@ -368,15 +337,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 #if __APPLE__
 	else if (Sinetek_rtsx_boot_arg_mimic_linux && sc->flags & RTSX_F_525A) {
 		// optimize_phy
-		RTSX_CLR(sc, 0xff7e, 0x10);
-		error = rtsx_write_phy(sc, 0x1d, 0x99ff); // _PHY_FLD0
-		if (error) return error;
-		error = rtsx_write_phy(sc, 0x03, 0x2748); // _PHY_ANA03
-		if (error) return error;
-		if (sc->flags & RTSX_F_525A_TYPE_A) {
-			error = rtsx_write_phy(sc, 0x19, 0x3902);
-			if (error) return error;
-		}
+		error = rts525a_optimize_phy(sc);
 	}
 #endif
 	else
@@ -397,15 +358,12 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 
 #if __APPLE__
 	if (Sinetek_rtsx_boot_arg_mimic_linux) {
-		RTSX_CLR(sc, RTSX_CHANGE_LINK_STATE,
-		    RTSX_FORCE_RST_CORE_EN | RTSX_NON_STICKY_RST_N_DBG /* | 0x04 MIMMIC LINUX */);
+		/* Reset delink mode */
+		RTSX_CLR(sc, RTSX_CHANGE_LINK_STATE, 0x0A);
+		/* Card driving select */
 		if (sc->flags & (RTSX_F_5229 | RTSX_F_525A)) {
-			RTSX_WRITE(sc, 0xFD53 /* CARD_DRIVE_SEL */, 0x41); // MS_DRIVE_8mA|GPIO_DRIVE_8mA
+			RTSX_WRITE(sc, 0xFD53 /* CARD_DRIVE_SEL */, Sinetek_rtsx_3rdParty_linux_card_drive_sel);
 		}
-#if DEBUG
-		// only for debugging purposes
-		rtsx_base_fetch_vendor_settings(sc);
-#endif
 	} else {
 		RTSX_CLR(sc, RTSX_CHANGE_LINK_STATE,
 		    RTSX_FORCE_RST_CORE_EN | RTSX_NON_STICKY_RST_N_DBG | 0x04);
@@ -423,6 +381,7 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 
 #if __APPLE__
 	if (Sinetek_rtsx_boot_arg_mimic_linux) {
+		/* Disable cd_pwr_save */
 		UTL_CHK_SUCCESS(rtsx_write(sc, RTSX_CHANGE_LINK_STATE, 0x16, 0x10));
 	} else {
 		RTSX_SET(sc, RTSX_CHANGE_LINK_STATE, RTSX_MAC_PHY_RST_N_DBG);
@@ -436,6 +395,19 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 
 	/* Set RC oscillator to 400K. */
 	RTSX_CLR(sc, RTSX_RCCTL, RTSX_RCCTL_F_2M);
+
+#if __APPLE__
+	RTSX_CLR(sc, RTSX_NFTS_TX_CTRL, 0x02);
+	
+	RTSX_SET(sc, 0xFE58 /* PM_CLK_FORCE_CTL */, 0x01);
+	
+	if (sc->flags & RTSX_F_525A) {
+		int rts525a_extra_init_hw(struct rtsx_pcr *pcr);
+		error = UTL_CHK_SUCCESS(rts525a_extra_init_hw(sc));
+		if (error)
+			return error;
+	}
+#endif
 
 	/* Request clock by driving CLKREQ pin to zero. */
 	RTSX_SET(sc, RTSX_PETXCFG, RTSX_PETXCFG_CLKREQ_PIN);
@@ -702,13 +674,27 @@ rtsx_switch_sd_clock(struct rtsx_softc *sc, u_int8_t n, int div, int mcu)
 
 	RTSX_SET(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
 
+#if __APPLE__
+	if (!Sinetek_rtsx_boot_arg_mimic_linux) {
+		RTSX_WRITE(sc, RTSX_CARD_CLK_SOURCE,
+		    RTSX_CRC_FIX_CLK | RTSX_SD30_VAR_CLK0 | RTSX_SAMPLE_VAR_CLK1);
+		// this is done in sd_set_timing (check...)
+		RTSX_CLR(sc, RTSX_SD_SAMPLE_POINT_CTL, RTSX_SD20_RX_SEL_MASK);
+		RTSX_WRITE(sc, RTSX_SD_PUSH_POINT_CTL, RTSX_SD20_TX_NEG_EDGE);
+	}
+#else
 	RTSX_WRITE(sc, RTSX_CARD_CLK_SOURCE,
 	    RTSX_CRC_FIX_CLK | RTSX_SD30_VAR_CLK0 | RTSX_SAMPLE_VAR_CLK1);
 	RTSX_CLR(sc, RTSX_SD_SAMPLE_POINT_CTL, RTSX_SD20_RX_SEL_MASK);
 	RTSX_WRITE(sc, RTSX_SD_PUSH_POINT_CTL, RTSX_SD20_TX_NEG_EDGE);
+#endif
 	RTSX_WRITE(sc, RTSX_CLK_DIV, (div << 4) | mcu);
 	RTSX_CLR(sc, RTSX_SSC_CTL1, RTSX_RSTB);
+#if __APPLE__
+	rtsx_write(sc, RTSX_SSC_CTL2, RTSX_SSC_DEPTH_MASK, 4 - div /* ssc_depth */);
+#else
 	RTSX_CLR(sc, RTSX_SSC_CTL2, RTSX_SSC_DEPTH_MASK);
+#endif
 	RTSX_WRITE(sc, RTSX_SSC_DIV_N_0, n);
 	RTSX_SET(sc, RTSX_SSC_CTL1, RTSX_RSTB);
 	delay(100);
@@ -787,6 +773,9 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 
 	s = splsdmmc();
 
+#if __APPLE__
+	UTL_DEBUG_DEF("Setting bus clock = %d KHz", freq);
+#endif
 	if (freq == SDMMC_SDCLK_OFF) {
 		error = rtsx_stop_sd_clock(sc);
 		goto ret;
@@ -803,6 +792,36 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	/*
 	 * Configure the clock frequency.
 	 */
+#if __APPLE__
+	if (Sinetek_rtsx_boot_arg_mimic_linux) {
+		/* These numbers come from the Linux driver's code. */
+		switch (freq) {
+		case SDMMC_SDCLK_400KHZ:
+			n = 128;
+			div = RTSX_CLK_DIV_4;
+			mcu = 7;
+			error = rtsx_write(sc, RTSX_SD_CFG1, RTSX_CLK_DIVIDE_MASK, RTSX_CLK_DIVIDE_128);
+			if (error)
+				return error;
+			break;
+		case SDMMC_SDCLK_25MHZ:
+			n = 98;
+			div = RTSX_CLK_DIV_2;
+			mcu = 5;
+			RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_CLK_DIVIDE_MASK);
+			break;
+		case SDMMC_SDCLK_50MHZ:
+			n = 98;
+			div = RTSX_CLK_DIV_1;
+			mcu = 4;
+			RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_CLK_DIVIDE_MASK);
+			break;
+		default:
+			error = EINVAL;
+			goto ret;
+		}
+	} else {
+#endif
 	switch (freq) {
 	case SDMMC_SDCLK_400KHZ:
 		n = 80; /* minimum */
@@ -826,6 +845,9 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 		error = EINVAL;
 		goto ret;
 	}
+#if __APPLE__
+	}
+#endif
 
 	/*
 	 * Enable SD clock.
@@ -1538,11 +1560,8 @@ rtsx_soft_reset(struct rtsx_softc *sc)
 	WRITE4(sc, RTSX_HCBCTLR, RTSX_STOP_CMD);
 
 #if __APPLE__
-	if (!Sinetek_rtsx_boot_arg_mimic_linux) {
-		// Linux does not do this...
-		(void)rtsx_write(sc, RTSX_CARD_STOP, RTSX_SD_STOP|RTSX_SD_CLR_ERR,
-				 RTSX_SD_STOP|RTSX_SD_CLR_ERR);
-	}
+	// Linux does this, but in a different way (check...)
+	(void)rtsx_write(sc, RTSX_CARD_STOP, RTSX_SD_STOP|RTSX_SD_CLR_ERR, RTSX_SD_STOP|RTSX_SD_CLR_ERR);
 #else
 	(void)rtsx_write(sc, RTSX_CARD_STOP, RTSX_SD_STOP|RTSX_SD_CLR_ERR,
 		    RTSX_SD_STOP|RTSX_SD_CLR_ERR);

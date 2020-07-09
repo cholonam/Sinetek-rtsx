@@ -13,6 +13,7 @@
 		93348FA52435C2FD00F26905 /* spl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93348FA42435C2FD00F26905 /* spl.cpp */; };
 		93371EA02435C52E004D5FFB /* tsleep.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93371E9E2435C52E004D5FFB /* tsleep.cpp */; };
 		9337302A2435ACC700254E78 /* kthread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 933730282435ACC700254E78 /* kthread.cpp */; };
+		9344429424B6843B00154C67 /* rts5249.c in Sources */ = {isa = PBXBuildFile; fileRef = 9344429224B6843B00154C67 /* rts5249.c */; };
 		9352ADD9243F1425001D1B21 /* rwlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9352ADD7243F1425001D1B21 /* rwlock.cpp */; };
 		93807805243383E00014C724 /* bus_space.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 93807803243383E00014C724 /* bus_space.cpp */; };
 		9E11DE591E4CB19C00AF36C8 /* SDDisk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9E11DE571E4CB19C00AF36C8 /* SDDisk.cpp */; };
@@ -38,6 +39,9 @@
 		93371E9F2435C52E004D5FFB /* tsleep.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tsleep.h; sourceTree = "<group>"; };
 		933730282435ACC700254E78 /* kthread.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = kthread.cpp; sourceTree = "<group>"; };
 		933730292435ACC700254E78 /* kthread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kthread.h; sourceTree = "<group>"; };
+		9344429224B6843B00154C67 /* rts5249.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = rts5249.c; sourceTree = "<group>"; };
+		9347252E24B69D5800745646 /* rtsx_pci.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rtsx_pci.h; sourceTree = "<group>"; };
+		934CC47E24B6F23A008D59BC /* rts_pcr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rts_pcr.h; sourceTree = "<group>"; };
 		9352ADD7243F1425001D1B21 /* rwlock.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = rwlock.cpp; sourceTree = "<group>"; };
 		9352ADD8243F1425001D1B21 /* rwlock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rwlock.h; sourceTree = "<group>"; };
 		9355866F242211D600B8B0B9 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
@@ -80,6 +84,56 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9344429024B6840000154C67 /* linux */ = {
+			isa = PBXGroup;
+			children = (
+				934F050924C3CD29009BBC92 /* drivers */,
+				934F050C24C3CE4B009BBC92 /* include */,
+			);
+			path = linux;
+			sourceTree = "<group>";
+		};
+		934F050924C3CD29009BBC92 /* drivers */ = {
+			isa = PBXGroup;
+			children = (
+				934F050A24C3CD31009BBC92 /* misc */,
+			);
+			path = drivers;
+			sourceTree = "<group>";
+		};
+		934F050A24C3CD31009BBC92 /* misc */ = {
+			isa = PBXGroup;
+			children = (
+				934F050B24C3CD37009BBC92 /* cardreader */,
+			);
+			path = misc;
+			sourceTree = "<group>";
+		};
+		934F050B24C3CD37009BBC92 /* cardreader */ = {
+			isa = PBXGroup;
+			children = (
+				9344429224B6843B00154C67 /* rts5249.c */,
+				934CC47E24B6F23A008D59BC /* rts_pcr.h */,
+			);
+			path = cardreader;
+			sourceTree = "<group>";
+		};
+		934F050C24C3CE4B009BBC92 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				934F050E24C3D1EC009BBC92 /* linux */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		934F050E24C3D1EC009BBC92 /* linux */ = {
+			isa = PBXGroup;
+			children = (
+				9347252E24B69D5800745646 /* rtsx_pci.h */,
+			);
+			path = linux;
+			sourceTree = "<group>";
+		};
 		93576F8424263CC8006F1A33 /* openbsd */ = {
 			isa = PBXGroup;
 			children = (
@@ -106,6 +160,7 @@
 		93989D74246D6434007B17DB /* 3rdParty */ = {
 			isa = PBXGroup;
 			children = (
+				9344429024B6840000154C67 /* linux */,
 				93989D75246D6446007B17DB /* openbsd */,
 			);
 			path = 3rdParty;
@@ -263,6 +318,7 @@
 				9319F491243081B600A4921E /* openbsd.cpp in Sources */,
 				9E11DE591E4CB19C00AF36C8 /* SDDisk.cpp in Sources */,
 				93807805243383E00014C724 /* bus_space.cpp in Sources */,
+				9344429424B6843B00154C67 /* rts5249.c in Sources */,
 				9E9EEDBE1E4C869F00E640DB /* sdmmc_cis.c in Sources */,
 				9352ADD9243F1425001D1B21 /* rwlock.cpp in Sources */,
 				9E9EEDC31E4C927D00E640DB /* sdmmc_mem.c in Sources */,
