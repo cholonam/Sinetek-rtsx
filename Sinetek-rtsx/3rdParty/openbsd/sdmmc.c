@@ -492,7 +492,7 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 #if __APPLE__
 			int dec_volt_min = 16 + (bit - 4);
 			int dec_volt_max = dec_volt_min + 1;
-			UTL_LOG("Minimum voltage supported by card and host: %d.%d-%d.%d",
+			UTL_DEBUG_DEF("Minimum voltage supported by card and host: %d.%d-%d.%d",
 				dec_volt_min / 10, dec_volt_min % 10,
 				dec_volt_max / 10, dec_volt_max % 10);
 #endif
@@ -848,7 +848,7 @@ exec_done:
 static void get_status(struct sdmmc_softc *sc)
 {
 	struct sdmmc_command status_cmd = {};
-	unsigned int retries = 2;
+	unsigned int retries = 1;
 	
 	UTL_CHK_PTR(sc, );
 	
