@@ -1053,6 +1053,20 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	if ((error = sdmmc_select_card(sc, sf)) != 0)
 		goto err;
 
+#if __APPLE__ && RTSX_USE_PRE_ERASE_BLK
+	// PRE-ERASE BLOCKS (this should make writes faster)
+	if (Sinetek_rtsx_boot_arg_mimic_linux && datalen / cmd.c_blklen > 1) {
+		struct sdmmc_command pre_erase_cmd = {};
+		pre_erase_cmd.c_opcode = 23;
+		pre_erase_cmd.c_arg = datalen >> 9;
+		pre_erase_cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+		error = sdmmc_app_command(sc, &pre_erase_cmd);
+		if (error) {
+			UTL_ERR("Failed to send pre-erase command (error = %d)", error);
+		}
+	}
+#endif
+
 	bzero(&cmd, sizeof cmd);
 	cmd.c_data = data;
 	cmd.c_datalen = datalen;

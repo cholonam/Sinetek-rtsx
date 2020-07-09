@@ -24,6 +24,7 @@ The code allows some customization by defining/undefining certain preprocessor m
 | `RTSX_USE_IOLOCK`        |                   | This should use more locks to protect critical sections.                                                                    |
 | `RTSX_USE_IOCOMMANDGATE` | `RTSX_USE_IOLOCK` | A try to make `IOCommandGate` working, but never really worked.                                                             |
 | `RTSX_USE_IOMALLOC`      |                   | Use `IOMalloc`/`IOFree` for memory management instead of `new`/`delete`.                                                    |
+| `RTSX_USE_PRE_ERASE_BLK` |                   | Issue an ACMD23 before a multiblock write. Does not seem to make any difference in speed. Disabled by default.              |
 
 ### Boot Arguments
 
