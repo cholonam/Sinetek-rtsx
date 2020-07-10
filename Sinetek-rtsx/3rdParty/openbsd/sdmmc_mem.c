@@ -658,6 +658,14 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		support_func = SFUNC_STATUS_GROUP(&status, 1);
 
+#if __APPLE__
+		UTL_DEBUG_DEF("Supported speeds: 0x%x (%s%s%s%s%s)", support_func,
+			      (support_func & (1 << SD_ACCESS_MODE_SDR12 )) ? "SDR12" : "",
+			      (support_func & (1 << SD_ACCESS_MODE_SDR25 )) ? " SDR25 (HS)" : "",
+			      (support_func & (1 << SD_ACCESS_MODE_SDR50 )) ? " SDR50" : "",
+			      (support_func & (1 << SD_ACCESS_MODE_SDR104)) ? " SDR104" : "",
+			      (support_func & (1 << SD_ACCESS_MODE_DDR50 )) ? " DDR50" : "");
+#endif
 		if (support_func & (1 << SD_ACCESS_MODE_SDR25))
 			best_func = 1;
 	}

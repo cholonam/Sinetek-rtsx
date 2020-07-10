@@ -910,6 +910,9 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 		     cmd->c_opcode == 52)) {
 			// those commands may give timeouts if they are not supported
 			ok_msg = " (OK)";
+		} else if (cmd->c_error == ETIMEDOUT && cmd->c_opcode == 8) {
+			/* version 1.x cards (up to 2G capacity) will not respond to CMD8 */
+			ok_msg = " (OK if ver 1.x SD card)";
 		}
 		UTL_ERR("%s: cmd %u (%s) arg=%#x data=%p dlen=%d flags=%#x proc=\"%s\" "
 			"(error %d%s)\n", DEVNAME(sc), cmd->c_opcode, mmcCmd2str(cmd->c_opcode),

@@ -42,7 +42,7 @@ int tsleep_nsec(void *ident, int priority, const char *wmesg, uint64_t nsecs)
 		ret = IORecursiveLockSleepDeadline((IORecursiveLock *) Sinetek_rtsx_openbsd_compat_spl_getGlobalLock(),
 						   ident, nsecs2AbsoluteTimeDeadline(nsecs), THREAD_UNINT);
 	}
-	UTL_DEBUG_DEF("tsleep_nsec ret = %d (%s)", ret,
+	UTL_DEBUG_LOOP("tsleep_nsec ret = %d (%s)", ret,
 		      ret == THREAD_AWAKENED ? "THREAD_AWAKENED" :
 		      ret == THREAD_TIMED_OUT ? "THREAD_TIME_OUT" : "?");
 	// See: https://github.com/apple/darwin-xnu/blob/master/bsd/kern/kern_synch.c
