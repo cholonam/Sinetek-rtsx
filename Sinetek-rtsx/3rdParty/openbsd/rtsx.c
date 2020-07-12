@@ -666,11 +666,23 @@ rtsx_stop_sd_clock(struct rtsx_softc *sc)
 	return 0;
 }
 
+/*
+ * cholonam: It seems this function was equivalent to sd_set_timing() + rtsx_pci_switch_clock(). However, I'm making it
+ *           equivalent to rtsx_pci_switch_clock() and moving sd_set_timing() to this functions's caller
+ *           rtsx_bus_clock() because it needs the timing parameter.
+ */
 int
 rtsx_switch_sd_clock(struct rtsx_softc *sc, u_int8_t n, int div, int mcu)
 {
+#if __APPLE__
+	if (!Sinetek_rtsx_boot_arg_mimic_linux) {
+		/* Enable SD 2.0 mode. */
+		RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_SD_MODE_MASK);
+	}
+#else
 	/* Enable SD 2.0 mode. */
 	RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_SD_MODE_MASK);
+#endif
 
 	RTSX_SET(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
 
@@ -697,7 +709,11 @@ rtsx_switch_sd_clock(struct rtsx_softc *sc, u_int8_t n, int div, int mcu)
 #endif
 	RTSX_WRITE(sc, RTSX_SSC_DIV_N_0, n);
 	RTSX_SET(sc, RTSX_SSC_CTL1, RTSX_RSTB);
+#if __APPLE__
+	delay(130); /* be safe */
+#else
 	delay(100);
+#endif
 
 	RTSX_CLR(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
 
@@ -780,6 +796,34 @@ rtsx_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 		error = rtsx_stop_sd_clock(sc);
 		goto ret;
 	}
+	
+#if __APPLE__
+	if (Sinetek_rtsx_boot_arg_mimic_linux) {
+		// implement linux' sd_set_timing() here
+		switch (timing) {
+		case SDMMC_SDCLK_50MHZ:
+			// high-speed mode
+			RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_SD_MODE_MASK);
+			RTSX_SET(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
+			RTSX_WRITE(sc, RTSX_CARD_CLK_SOURCE,
+				   RTSX_CRC_FIX_CLK | RTSX_SD30_VAR_CLK0 | RTSX_SAMPLE_VAR_CLK1);
+			RTSX_CLR(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
+			RTSX_SET(sc, RTSX_SD_PUSH_POINT_CTL, 0x10);
+			RTSX_SET(sc, RTSX_SD_SAMPLE_POINT_CTL, RTSX_SD20_RX_14_DELAY);
+			break;
+		default:
+			// standard-speed mode
+			RTSX_CLR(sc, RTSX_SD_CFG1, RTSX_SD_MODE_MASK);
+			RTSX_SET(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
+			RTSX_WRITE(sc, RTSX_CARD_CLK_SOURCE,
+				   RTSX_CRC_FIX_CLK | RTSX_SD30_VAR_CLK0 | RTSX_SAMPLE_VAR_CLK1);
+			RTSX_CLR(sc, RTSX_CLK_CTL, RTSX_CLK_LOW_FREQ);
+			RTSX_WRITE(sc, RTSX_SD_PUSH_POINT_CTL, 0x00);
+			RTSX_CLR(sc, RTSX_SD_SAMPLE_POINT_CTL, RTSX_SD20_RX_14_DELAY);
+			break;
+		}
+	}
+#endif // __APPLE__
 
 	/* Round down to a supported frequency. */
 	if (freq >= SDMMC_SDCLK_50MHZ)
