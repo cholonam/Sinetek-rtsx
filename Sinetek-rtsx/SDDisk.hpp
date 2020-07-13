@@ -55,7 +55,12 @@ public:
 						 IOStorageAttributes *attributes,
 						 IOStorageCompletion *completion) override;
 
-#if 0
+#if RTSX_DEBUG_MESSAGES_RECEIVED
+	int messages_received = 0;
+	virtual IOReturn message(UInt32 type, IOService *provider, void *argument = 0) override;
+#endif
+
+#if RTSX_DEBUG_RETAIN_RELEASE
 	virtual void taggedRetain(const void * tag) const override;
 	virtual void taggedRelease(const void * tag, const int when) const override;
 #endif

@@ -113,11 +113,15 @@ bool SDDisk::attach(IOService* provider)
 
 void SDDisk::detach(IOService* provider)
 {
-	UTL_LOG("SDDisk detaching...");
+	UTL_LOG("SDDisk detaching (retainCount=%d)...", this->getRetainCount());
 	UTL_SAFE_RELEASE_NULL(provider_);
 
 	super::detach(provider);
+#if RTSX_DEBUG_MESSAGES_RECEIVED
+	UTL_LOG("SDDisk detached (retainCount=%d, messages_received=%d).", this->getRetainCount(), messages_received);
+#else
 	UTL_LOG("SDDisk detached (retainCount=%d).", this->getRetainCount());
+#endif
 }
 
 IOReturn SDDisk::doEjectMedia(void)
@@ -234,9 +238,10 @@ IOReturn SDDisk::reportMaxValidBlock(UInt64 *maxBlock)
 	return kIOReturnSuccess;
 }
 
+// IOBlockStorageDriver only calls this method once during handleStart, and *mediaPresent has to be true
 IOReturn SDDisk::reportMediaState(bool *mediaPresent, bool *changedState)
 {
-	UTL_DEBUG_FUN("START");
+	UTL_LOG("START");
 	*mediaPresent = true;
 	*changedState = false;
 
@@ -471,12 +476,25 @@ IOReturn SDDisk::doAsyncReadWrite(IOMemoryDescriptor *buffer,
 	return kIOReturnSuccess;
 }
 
-#if 0
-int mhc_count = 0;
+#if RTSX_DEBUG_MESSAGES_RECEIVED
+IOReturn SDDisk::message(UInt32 type, IOService *provider, void *argument)
+{
+	UTL_DEBUG_FUN("START (type = %d, provider = " RTSX_PTR_FMT ", argument = " RTSX_PTR_FMT ")", type,
+		      RTSX_PTR_FMT_VAR(provider), RTSX_PTR_FMT_VAR(argument));
+	messages_received++;
+	return super::message(type, provider, argument);
+}
+#endif // RTSX_DEBUG_MESSAGES_RECEIVED
+
+#if RTSX_DEBUG_RETAIN_RELEASE
+int mhc_count;
 void SDDisk::taggedRetain(const void * tag) const {
 	if (tag) {
-		UTL_DEBUG_DEF("                          Retain! (0x%08x) (%d) (%d -> %d)",
-			      (unsigned) reinterpret_cast<int64_t>(tag), getRetainCount(), mhc_count, mhc_count + 1);
+		UTL_DEBUG_DEF("                          Retain! (tag=%s from "
+			      RTSX_PTR_FMT ") (%d) (%d -> %d)",
+			      ((OSMetaClass *)tag)->getClassName(),
+			      RTSX_PTR_FMT_VAR(__builtin_return_address(0)),
+			      getRetainCount(), mhc_count, mhc_count + 1);
 		mhc_count++;
 	}
 	super::taggedRetain(tag);
@@ -485,8 +503,11 @@ void SDDisk::taggedRelease(const void * tag, const int when) const {
 	super::taggedRelease(tag, when);
 	if (tag) {
 		mhc_count--;
-		UTL_DEBUG_DEF("                          Release! (0x%08x) (%d) (%d -> %d)",
-			      (unsigned) reinterpret_cast<int64_t>(tag), getRetainCount(), mhc_count + 1, mhc_count);
+		UTL_DEBUG_DEF("                          Release! (tag=%s from "
+			      RTSX_PTR_FMT ") (%d) (%d -> %d)",
+			      ((OSMetaClass *)tag)->getClassName(),
+			      RTSX_PTR_FMT_VAR(__builtin_return_address(0)),
+			      getRetainCount(), mhc_count + 1, mhc_count);
 	}
 }
-#endif // DEBUG
+#endif // RTSX_DEBUG_RETAIN_RELEASE

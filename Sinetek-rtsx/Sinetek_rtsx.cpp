@@ -447,6 +447,7 @@ void Sinetek_rtsx::blk_attach()
 	sddisk_->release();
 }
 
+// TODO: THIS METHOD SHOULD RETURN A VALUE!
 void Sinetek_rtsx::blk_detach()
 {
 	UTL_DEBUG_FUN("START");
