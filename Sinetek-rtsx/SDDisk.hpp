@@ -26,6 +26,8 @@ public:
 
 	virtual bool		attach(IOService* provider) override;
 	virtual void		detach(IOService* provider) override;
+	
+	virtual IOReturn	SendMessageMediaOffline();
 
 	/**
 	 * Subclassing requirements.

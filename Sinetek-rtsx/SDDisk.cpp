@@ -2,6 +2,7 @@
 
 #include <IOKit/IOLib.h>
 #include <IOKit/storage/IOBlockStorageDevice.h>
+#include <IOKit/storage/IOBlockStorageDriver.h> // kIOMediaStateOffline
 #include <IOKit/IOMemoryDescriptor.h>
 
 #define UTL_THIS_CLASS "SDDisk::"
@@ -122,6 +123,12 @@ void SDDisk::detach(IOService* provider)
 #else
 	UTL_LOG("SDDisk detached (retainCount=%d).", this->getRetainCount());
 #endif
+}
+
+IOReturn SDDisk::SendMessageMediaOffline() {
+	// Notify clients that the disk has been detached, this should make all the lower nodes disappear in
+	// IORegistryExplorer
+	return messageClients(kIOMessageMediaStateHasChanged, (void *) kIOMediaStateOffline);
 }
 
 IOReturn SDDisk::doEjectMedia(void)
