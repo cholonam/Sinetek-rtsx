@@ -6,9 +6,7 @@
 #include <IOKit/IOLib.h>
 #include <IOKit/pci/IOPCIDevice.h>
 #include <IOKit/IOTimerEventSource.h>
-#if RTSX_USE_IOFIES
 #include <IOKit/IOFilterInterruptEventSource.h>
-#endif
 
 #undef super
 #define super IOService
@@ -171,7 +169,7 @@ void Sinetek_rtsx::stop(IOService *provider)
 	UTL_LOG("Driver stopped.");
 }
 
-void Sinetek_rtsx::trampoline_intr(OSObject *ih, IOInterruptEventSource *ies, int count)
+void Sinetek_rtsx::InterruptHandler(OSObject *ih, IOInterruptEventSource *ies, int count)
 {
 	UTL_DEBUG_INT("Interrupt received (ies=" RTSX_PTR_FMT " count=%d)!", RTSX_PTR_FMT_VAR(ies), count);
 	/* go to isr handler */
@@ -235,12 +233,8 @@ void Sinetek_rtsx::rtsx_pci_attach()
 	int intIndex = findMSI(provider_);
 	if (intIndex < 0)
 		intIndex = 0; // no MSI found -> use default index
-#if RTSX_USE_IOFIES
-	intr_source_ = IOFilterInterruptEventSource::filterInterruptEventSource(this, trampoline_intr, is_my_interrupt,
+	intr_source_ = IOFilterInterruptEventSource::filterInterruptEventSource(this, InterruptHandler, InterruptFilter,
 										provider_, intIndex);
-#else // RTSX_USE_IOFIES
-	intr_source_ = IOInterruptEventSource::interruptEventSource(this, trampoline_intr, provider_, intIndex);
-#endif // RTSX_USE_IOFIES
 	if (!intr_source_)
 	{
 		printf("can't map interrupt source\n");
@@ -402,13 +396,11 @@ void Sinetek_rtsx::task_execute_one_impl_(OSObject *target, IOTimerEventSource *
 		UTL_DEBUG_LOOP("  => Task deleted from queue");
 		task->func(task->arg);
 		UTL_DEBUG_LOOP("  => Executed one task!");
-#if RTSX_FIX_TASK_BUG
 		if (task->func == read_task_impl_) {
 			// free only read_task
 			UTL_DEBUG_LOOP("Freeing read task...");
 			UTL_FREE(task, sizeof(sdmmc_task));
 		}
-#endif
 	}
 #if RTSX_USE_IOLOCK
 	IORecursiveLockUnlock(sc->splsdmmc_rec_lock);
@@ -462,7 +454,6 @@ void Sinetek_rtsx::blk_detach()
 	UTL_DEBUG_FUN("END");
 }
 
-#if RTSX_USE_IOFIES
 uint32_t Sinetek_rtsx::READ4(IOByteCount offset)
 {
 	uint32_t ret = 0;
@@ -472,7 +463,7 @@ uint32_t Sinetek_rtsx::READ4(IOByteCount offset)
 }
 
 /// This function runs in interrupt context, meaning that IOLog CANNOT be used (only basic functionality is available).
-bool Sinetek_rtsx::is_my_interrupt(OSObject *arg, IOFilterInterruptEventSource *source)
+bool Sinetek_rtsx::InterruptFilter(OSObject *arg, IOFilterInterruptEventSource *source)
 {
 	// Can't use UTL_CHK_PTR here because we can't log
 	if (!arg) return false;
@@ -490,8 +481,6 @@ bool Sinetek_rtsx::is_my_interrupt(OSObject *arg, IOFilterInterruptEventSource *
 
 	return true;
 }
-#endif // RTSX_USE_IOFIES
-
 
 #if RTSX_USE_IOCOMMANDGATE
 void Sinetek_rtsx::executeOneAsCommand() {

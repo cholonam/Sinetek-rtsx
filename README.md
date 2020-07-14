@@ -11,7 +11,9 @@ It took me a while to understand the code. Some problems I found:
 
 ## Changes made
 
-An OpenBSD-compatibility layer has been added to make the original OpenBSD driver work with as few changes as possible. This implied rewriting all OpenBSD functions which are not available in Darwin so that the same behavior is obtained using only functions available in the macOS kernel. The benefit this brings is that the future improvements in the OpenBSD driver can be incorporated more easily.
+* An OpenBSD-compatibility layer has been added to make the original OpenBSD driver work with as few changes as possible. This implied rewriting all OpenBSD functions which are not available in Darwin so that the same behavior is obtained using only functions available in the macOS kernel. The benefit this brings is that the future improvements in the OpenBSD driver can be incorporated more easily.
+* Use `IOFilterInterruptEventSource` instead of `IOInterruptEventSource` (should give better performance).
+* Fixed a bug where a single task member was being reused. Since there may be more than one task pending, a new task struct must be allocated/freed for each new task.
 
 ### Compile-Time Options
 
@@ -19,8 +21,6 @@ The code allows some customization by defining/undefining certain preprocessor m
 
 | Option                   | Requires          | Notes                                                                                                                       |
 |--------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `RTSX_FIX_TASK_BUG`      |                   | Fix task bug (reusing task pointer instead of allocating it).                                                               |
-| `RTSX_USE_IOFIES`        |                   | Use `IOFilterInterruptEventSource` instead of `IOInterruptEventSource` (should give better performance).                    |
 | `RTSX_USE_IOLOCK`        |                   | This should use more locks to protect critical sections.                                                                    |
 | `RTSX_USE_IOCOMMANDGATE` | `RTSX_USE_IOLOCK` | A try to make `IOCommandGate` working, but never really worked.                                                             |
 | `RTSX_USE_IOMALLOC`      |                   | Use `IOMalloc`/`IOFree` for memory management instead of `new`/`delete`.                                                    |

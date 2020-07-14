@@ -12,17 +12,16 @@
 #if RTSX_USE_IOCOMMANDGATE
 #include <IOKit/IOCommandGate.h>
 #endif
-#if RTSX_USE_IOFIES
 #include <IOKit/IOFilterInterruptEventSource.h>
-#endif
 #include <IOKit/IOBufferMemoryDescriptor.h>
 
 __BEGIN_DECLS
 #include "sdmmcvar.h"
 __END_DECLS
 
-// forward declaration
+// forward declarations
 struct rtsx_softc;
+struct IOInterruptEventSource;
 
 class SDDisk;
 struct Sinetek_rtsx : public IOService
@@ -38,7 +37,7 @@ public:
 	virtual bool start(IOService * provider) override;
 	virtual void stop(IOService * provider) override;
 
-	static void trampoline_intr(OSObject *ih, IOInterruptEventSource *ies, int count);
+	static void InterruptHandler(OSObject *ih, IOInterruptEventSource *ies, int count);
 
 	void rtsx_pci_attach();
 	void rtsx_pci_detach();
@@ -48,17 +47,14 @@ public:
 	void blk_attach();
 	void blk_detach();
 
-#if RTSX_USE_IOFIES
 	uint32_t READ4(IOByteCount offset);
-	static bool is_my_interrupt(OSObject *arg, IOFilterInterruptEventSource *source);
-#endif // RTSX_USE_IOFIES
+	static bool InterruptFilter(OSObject *arg, IOFilterInterruptEventSource *source);
 
 	// ** //
 	IOPCIDevice *		provider_;
 	IOWorkLoop *		workloop_;
 	IOMemoryMap *		map_;
 	IOMemoryDescriptor *	memory_descriptor_;
-#if RTSX_USE_IOFIES
 	IOFilterInterruptEventSource *intr_source_;
 #if RTSX_USE_IOCOMMANDGATE
 	void executeOneAsCommand();
@@ -67,15 +63,8 @@ public:
 					       void *newRequest,
 					       void *, void *, void * );
 #endif
-#else // RTSX_USE_IOFIES
-	IOInterruptEventSource *intr_source_;
-#endif // RTSX_USE_IOFIES
 
 	SDDisk *			sddisk_;
-#if !RTSX_FIX_TASK_BUG
-	// This is not needed, since we will dynamically allocate read tasks
-	struct sdmmc_task	read_task_;
-#endif
 
 #if RTSX_USE_IOLOCK
 	IOLock *		intr_status_lock;

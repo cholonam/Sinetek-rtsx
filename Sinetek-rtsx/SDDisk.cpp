@@ -459,16 +459,11 @@ IOReturn SDDisk::doAsyncReadWrite(IOMemoryDescriptor *buffer,
 		bioargs->completion = *completion;
 	bioargs->that = this;
 
-#if RTSX_FIX_TASK_BUG
 	UTL_DEBUG_DEF("Allocating read task...");
 	auto newTask = UTL_MALLOC(sdmmc_task); // will be deleted after processed
 	if (!newTask) return kIOReturnNoMemory;
 	sdmmc_init_task(newTask, read_task_impl_, bioargs);
 	sdmmc_add_task(sdmmc_softc_, newTask);
-#else
-	sdmmc_init_task(&provider_->read_task_, read_task_impl_, bioargs);
-	sdmmc_add_task(sdmmc_softc_, &provider_->read_task_);
-#endif
 
 	// printf("=====================================================\n");
 
