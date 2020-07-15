@@ -428,11 +428,17 @@ void Sinetek_rtsx::blk_attach()
 	}
 	sddisk_ = OSTypeAlloc(SDDisk); // equivalent to new SDDisk();
 	UTL_CHK_PTR(sddisk_,);
+#if RTSX_DEBUG_RETAIN_RELEASE
+	sddisk_->debugRetainRelease(true);
+#endif
 	if (!sddisk_->init((struct sdmmc_softc *) rtsx_softc_original_->sdmmc)) { // TODO: Fix this!
 		UTL_ERR("SDDisk initialization failed!");
 		UTL_SAFE_RELEASE_NULL(sddisk_);
 		return;
 	};
+#if RTSX_DEBUG_RETAIN_RELEASE
+	sddisk_->debugRetainRelease(true);
+#endif
 	sddisk_->attach(this);
 	UTL_DEBUG_DEF("Registering service...");
 	sddisk_->registerService(); // this should probably be called by the start() method of sddisk_

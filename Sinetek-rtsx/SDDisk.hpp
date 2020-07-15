@@ -63,6 +63,10 @@ public:
 #endif
 
 #if RTSX_DEBUG_RETAIN_RELEASE
+	bool debugRetainReleaseEnabled;
+	mutable int  debugRetainReleaseCount; // to be modified by const functions
+	void debugRetainRelease(bool enabled);
+
 	virtual void taggedRetain(const void * tag) const override;
 	virtual void taggedRelease(const void * tag, const int when) const override;
 #endif

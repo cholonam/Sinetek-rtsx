@@ -69,6 +69,11 @@ bool SDDisk::init(struct sdmmc_softc *sc_sdmmc, OSDictionary* properties)
 
 	card_is_write_protected_ = true;
 	sdmmc_softc_ = sc_sdmmc;
+#if RTSX_DEBUG_RETAIN_RELEASE
+	debugRetainReleaseEnabled = false;
+	debugRetainReleaseCount = 0;
+#endif
+
 
 	UTL_DEBUG_FUN("END");
 	return true;
@@ -489,27 +494,33 @@ IOReturn SDDisk::message(UInt32 type, IOService *provider, void *argument)
 #endif // RTSX_DEBUG_MESSAGES_RECEIVED
 
 #if RTSX_DEBUG_RETAIN_RELEASE
-int mhc_count;
+void SDDisk::debugRetainRelease(bool enabled) {
+	debugRetainReleaseEnabled = enabled;
+}
+
 void SDDisk::taggedRetain(const void * tag) const {
-	if (tag) {
+	if (debugRetainReleaseEnabled) {
 		UTL_DEBUG_DEF("                          Retain! (tag=%s from "
-			      RTSX_PTR_FMT ") (%d) (%d -> %d)",
-			      ((OSMetaClass *)tag)->getClassName(),
+			      RTSX_PTR_FMT ") (retCnt: %d -> %d) (%d -> %d)",
+			      tag ? ((OSMetaClass *)tag)->getClassName() : "(null)",
 			      RTSX_PTR_FMT_VAR(__builtin_return_address(0)),
-			      getRetainCount(), mhc_count, mhc_count + 1);
-		mhc_count++;
+			      getRetainCount(), getRetainCount() + 1,
+			      debugRetainReleaseCount, debugRetainReleaseCount + 1);
+		debugRetainReleaseCount++;
 	}
 	super::taggedRetain(tag);
 }
 void SDDisk::taggedRelease(const void * tag, const int when) const {
-	super::taggedRelease(tag, when);
-	if (tag) {
-		mhc_count--;
+	// release may actually free the object, so we have to do the logging first
+	if (debugRetainReleaseEnabled) {
 		UTL_DEBUG_DEF("                          Release! (tag=%s from "
-			      RTSX_PTR_FMT ") (%d) (%d -> %d)",
-			      ((OSMetaClass *)tag)->getClassName(),
+			      RTSX_PTR_FMT ") (retCnt: %d -> %d) (%d -> %d)",
+			      tag ? ((OSMetaClass *)tag)->getClassName() : "(null)",
 			      RTSX_PTR_FMT_VAR(__builtin_return_address(0)),
-			      getRetainCount(), mhc_count + 1, mhc_count);
+			      getRetainCount(), getRetainCount() - 1,
+			      debugRetainReleaseCount, debugRetainReleaseCount - 1);
+		debugRetainReleaseCount--;
 	}
+	super::taggedRelease(tag, when);
 }
 #endif // RTSX_DEBUG_RETAIN_RELEASE
