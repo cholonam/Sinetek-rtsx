@@ -253,10 +253,9 @@ IOReturn SDDisk::reportMaxValidBlock(UInt64 *maxBlock)
 // IOBlockStorageDriver only calls this method once during handleStart, and *mediaPresent has to be true
 IOReturn SDDisk::reportMediaState(bool *mediaPresent, bool *changedState)
 {
-	UTL_LOG("START");
+	UTL_DEBUG_FUN("START");
 	*mediaPresent = true;
 	*changedState = false;
-
 	return kIOReturnSuccess;
 }
 
@@ -471,7 +470,6 @@ IOReturn SDDisk::doAsyncReadWrite(IOMemoryDescriptor *buffer,
 		bioargs->completion = *completion;
 	bioargs->that = this;
 
-	UTL_DEBUG_DEF("Allocating read task...");
 	auto newTask = UTL_MALLOC(sdmmc_task); // will be deleted after processed
 	if (!newTask) return kIOReturnNoMemory;
 	sdmmc_init_task(newTask, read_task_impl_, bioargs);
