@@ -35,11 +35,26 @@ The code allows some customization by defining/undefining certain preprocessor m
 | `-rtsx_ro`             | Read-only mode (disable writing).                                                                                           |
 | `rtsx_timeout_shift=n` | Multiply timeouts times 2<sup>*n*</sup>. May help with some slow cards (i.e.: `rtsx_timeout_shift=2`).                      |
 
+## Known Issues / Troubleshooting
+
+1. Slow performance
+   The driver only supports up to High-Speed mode, meaning that UHS-I and higher cards will only work as HS. This limitation comes from the OpenBSD driver on which this kext is based and I do not have any plan to fix it.
+
+1. Kext not unloading
+   You should be able to unload the kext using the command `kextunload -c Sinetek_rtsx`. Possible error causes are:
+   1. The card is inserted.
+   1. Some user-level program (HWMonitor is one of them) may hold references to a class in this kext that would prevent unloading. Try terminating these programs.
+
+1. Sleep/Wake Issues
+   The card is unmounted on sleep and remounted on wake. This is the expected behavior and it should work at least for chip RTS525A. For other chips, the card may become unreadable upon wake.
+
 ## To Do
 
 From higher to lower priority:
 
+ - Troubleshoot why after a soft reboot, for chip 525A version B, chip version is detected as 'A'.
  - Use command gate instead of two workloops? Is it even possible?
  - Prevent namespace pollution (OpenBSD functions pollute the namespace and may cause collisions).
+ - Use macOS SD-Card icon instead of the generic one.
 
 Pull requests are very welcome, specially to add support for chips other than RTS525A (the only chip I can test).
