@@ -8,6 +8,15 @@ It took me a while to understand the code. Some problems I found:
 
 1. We needed a way to wait for the interrupt while in `workloop_`. The solution adopted is to have two workloops, the normal `workloop_` and a separate workloop for tasks. I'm not sure whether this approach is right or not (an `IOCommandGate` with one single workloop seems the way to go), but for now it seems to work.
 1. It seems that the OpenBSD driver is still in a very rough state. My hope is that this driver gets improved over time and that these changes can be incorporated here.
+1. Currently, stability for RTS525A has been improved up to a usable level. ***This does not apply to other chips, which may have a very unstable behavior or not work at all.***
+
+### Chips known to work
+
+| Chip No. | Notes                                                                                                          |
+|----------|----------------------------------------------------------------------------------------------------------------|
+| RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized. |
+
+ _If you have a chip other than RTS525A and this kext is working for you, please let me know and I will update this table._
 
 ## Changes made
 
