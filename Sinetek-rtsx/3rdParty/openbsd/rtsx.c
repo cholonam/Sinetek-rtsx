@@ -282,9 +282,14 @@ rtsx_init(struct rtsx_softc *sc, int attaching)
 		RTSX_READ(sc, RTSX_DUMMY_REG, &version);
 		switch (version & 0x0F) {
 		case RTSX_IC_VERSION_A:
+			
+			
 		case RTSX_IC_VERSION_B:
+			
+			
 		case RTSX_IC_VERSION_D:
-			break;
+			
+			
 		case RTSX_IC_VERSION_C:
 			sc->flags |= RTSX_F_5229_TYPE_C;
 			break;
@@ -446,11 +451,16 @@ rtsx_activate(struct device *self, int act)
 
 		/* Handle cards ejected/inserted during suspend. */
 		if (READ4(sc, RTSX_BIPR) & RTSX_SD_EXIST)
+		{
 			rtsx_card_insert(sc);
+			rv = config_activate_children(self, act);
+		}
 		else
+		{
 			rtsx_card_eject(sc);
-
-		rv = config_activate_children(self, act);
+			rv = config_activate_children(self, act);
+		}
+		
 		break;
 	default:
 		rv = config_activate_children(self, act);

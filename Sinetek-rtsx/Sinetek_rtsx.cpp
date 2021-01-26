@@ -5,6 +5,7 @@
 
 #include <IOKit/IOLib.h>
 #include <IOKit/pci/IOPCIDevice.h>
+#include <IOKit/pci/IOPCIDevice.h>
 #include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOFilterInterruptEventSource.h>
 
@@ -181,18 +182,26 @@ void Sinetek_rtsx::InterruptHandler(OSObject *ih, IOInterruptEventSource *ies, i
 }
 
 // From https://developer.apple.com/library/archive/documentation/HardwareDrivers/Conceptual/ThunderboltDevGuide/Basics02/Basics02.html
-static int findMSI(IOPCIDevice *provider) {
+static int findMSI(IOPCIDevice *provider)
+{
 	int index  = 0;
-	for (index = 0; ; index++) {
+	int source = 0;
+	for (index = 0; ; index++)
+	{
 		IOReturn result   = kIOReturnSuccess;
 		int interruptType = 0;
 
 		result = provider->getInterruptType (index, &interruptType);
 		if (result != kIOReturnSuccess)
+		{
 			return -1;
-		if (interruptType & kIOInterruptTypePCIMessaged) {
+		}
+		if (interruptType & kIOInterruptTypePCIMessaged)
+		{
 			UTL_LOG("MSI interrupt found at index %d", index);
-			return index;
+			source = index;
+			return source;
+			
 		}
 	}
 }
@@ -319,15 +328,21 @@ IOReturn Sinetek_rtsx::setPowerState(unsigned long powerStateOrdinal, IOService 
 
 	switch (powerStateOrdinal) {
 		case kPowerStateSleep:
+			IOSleep(1000);
 			// save state
 			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_SUSPEND);
+			IOSleep(1000);
+			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_WAKEUP);
+			IOSleep(1000);
 			break;
 		case kPowerStateNormal:
+			IOSleep(1000);
 			// re-initialize chip
 			rtsx_init(rtsx_softc_original_, 1);
-
+			IOSleep(1000);
 			// restore state
 			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_RESUME);
+			
 			break;
 		default:
 			UTL_DEBUG_DEF("Ignoring unknown power state (%lu)", powerStateOrdinal);
