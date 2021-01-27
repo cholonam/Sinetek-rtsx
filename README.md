@@ -1,18 +1,6 @@
 # Sintekek-rtsx
 
-This is a try to make this kext working on my laptop (Thinkpad T450s). All credits are due to the original authors, @sinetek and @syscl and @cholonam.
-
-# Fixed sleep wake in 0x522710EC
-
--     Only 0x522710EC was tested, other chips were tested by themselves.
-
-# Debugging process：
-
--    I found that the card reader disappeared after the sleep wake, but if I slept again, the card reader returned to normal, indicating that it was not the initialization problem.
--    I suspect that the Sinetek_rtsx::setPowerState() did not save the state of the reader correctly.
--    I guess the reader didn't have time to save the state during sleep, so I added multiple iosleeps (1000) to the Sinetek_rtsx::setPowerState().
-
----------------------------------------------------------------------------------------------------------------------------------------            
+This is a try to make this kext working on my laptop (Dell XPS 9350). All credits are due to the original authors, @sinetek and @syscl.
 
 ## Overall notes
 

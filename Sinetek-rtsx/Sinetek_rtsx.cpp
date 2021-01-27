@@ -5,7 +5,6 @@
 
 #include <IOKit/IOLib.h>
 #include <IOKit/pci/IOPCIDevice.h>
-#include <IOKit/pci/IOPCIDevice.h>
 #include <IOKit/IOTimerEventSource.h>
 #include <IOKit/IOFilterInterruptEventSource.h>
 
@@ -182,26 +181,18 @@ void Sinetek_rtsx::InterruptHandler(OSObject *ih, IOInterruptEventSource *ies, i
 }
 
 // From https://developer.apple.com/library/archive/documentation/HardwareDrivers/Conceptual/ThunderboltDevGuide/Basics02/Basics02.html
-static int findMSI(IOPCIDevice *provider)
-{
+static int findMSI(IOPCIDevice *provider) {
 	int index  = 0;
-	int source = 0;
-	for (index = 0; ; index++)
-	{
+	for (index = 0; ; index++) {
 		IOReturn result   = kIOReturnSuccess;
 		int interruptType = 0;
 
 		result = provider->getInterruptType (index, &interruptType);
 		if (result != kIOReturnSuccess)
-		{
 			return -1;
-		}
-		if (interruptType & kIOInterruptTypePCIMessaged)
-		{
+		if (interruptType & kIOInterruptTypePCIMessaged) {
 			UTL_LOG("MSI interrupt found at index %d", index);
-			source = index;
-			return source;
-			
+			return index;
 		}
 	}
 }
@@ -332,8 +323,6 @@ IOReturn Sinetek_rtsx::setPowerState(unsigned long powerStateOrdinal, IOService 
 			// save state
 			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_SUSPEND);
 			IOSleep(1000);
-			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_WAKEUP);
-			IOSleep(1000);
 			break;
 		case kPowerStateNormal:
 			IOSleep(1000);
@@ -342,12 +331,34 @@ IOReturn Sinetek_rtsx::setPowerState(unsigned long powerStateOrdinal, IOService 
 			IOSleep(1000);
 			// restore state
 			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_RESUME);
-			
 			break;
 		default:
 			UTL_DEBUG_DEF("Ignoring unknown power state (%lu)", powerStateOrdinal);
 			break;
 	}
+	//Power management also needs some optimizations, for example, the system enters a locked state after a long sleep, the card reader cannot automatically detect and mount the card reader after waking up, and manual unplugging is required.
+	//You need to add a parameter to the Sinetek_rtsx::setPowerState to get the system state so that the device can be restored when the user is logged in。
+	/*
+	 If version
+	//Determine whether the POWER state is Sleep
+	if(powerStateOrdinal == kPowerStateSleep){
+		IOSleep(1000);
+		// save state
+		rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_SUSPEND);
+		IOSleep(1000);
+	}
+	//Determine whether the POWER status is Normal
+	else if(powerStateOrdinal == kPowerStateNormal){
+		IOSleep(1000);
+		// re-initialize chip
+		rtsx_init(rtsx_softc_original_, 1);
+		IOSleep(1000);
+		// restore state
+		rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_RESUME);
+	}
+	else{
+		UTL_DEBUG_DEF("Ignoring unknown power state (%lu)", powerStateOrdinal);
+	}*/
 	UTL_DEBUG_FUN("END");
 	return IOPMAckImplied;
 }
