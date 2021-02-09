@@ -12,9 +12,10 @@ It took me a while to understand the code. Some problems I found:
 
 ### Chips known to work
 
-| Chip No. | Notes                                                                                                          |
-|----------|----------------------------------------------------------------------------------------------------------------|
-| RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized. |
+| Chip No. | Notes                                                                                                                  |
+|----------|------------------------------------------------------------------------------------------------------------------------|
+| RTS5227  | Seems to work fine with sleep disabled. Adding boot parameter `rtsx_sleep_wake_delay_ms=1000 may help with sleep/wake. |
+| RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized.         |
 
  _If you have a chip other than RTS525A and this kext is working for you, please let me know and I will update this table._
 
@@ -37,12 +38,13 @@ The code allows some customization by defining/undefining certain preprocessor m
 
 ### Boot Arguments
 
-| Option                 | Notes                                                                                                                       |
-|------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `-rtsx_mimic_linux`    | Do some extra initialization which may be useful if your chip is exactly RTS525A version B (exactly the same as mine).      |
-| `-rtsx_no_adma`        | Disable ADMA.                                                                                                               |
-| `-rtsx_ro`             | Read-only mode (disable writing).                                                                                           |
-| `rtsx_timeout_shift=n` | Multiply timeouts times 2<sup>*n*</sup>. May help with some slow cards (i.e.: `rtsx_timeout_shift=2`).                      |
+| Option                       | Notes                                                                                                                       |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `-rtsx_mimic_linux`          | Do some extra initialization which may be useful if your chip is exactly RTS525A version B (exactly the same as mine).      |
+| `-rtsx_no_adma`              | Disable ADMA.                                                                                                               |
+| `-rtsx_ro`                   | Read-only mode (disable writing).                                                                                           |
+| `rtsx_timeout_shift=n`       | Multiply timeouts times 2<sup>*n*</sup>. May help with some slow cards (i.e.: `rtsx_timeout_shift=2`).                      |
+| `rtsx_sleep_wake_delay_ms=n` | Introduce a delay on sleep/wake that may help with some chips like RTS5227.                      |
 
 ## Known Issues / Troubleshooting
 

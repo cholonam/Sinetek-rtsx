@@ -58,6 +58,7 @@ static IOPMPowerState ourPowerStates[kPowerStateCount] =
 int Sinetek_rtsx_boot_arg_mimic_linux = 0;
 int Sinetek_rtsx_boot_arg_no_adma = 0;
 int Sinetek_rtsx_boot_arg_timeout_shift = 0;
+int Sinetek_rtsx_boot_arg_sleep_wake_delay_ms = 0;
 
 bool Sinetek_rtsx::init(OSDictionary *dictionary) {
 	if (!super::init()) return false;
@@ -79,6 +80,7 @@ bool Sinetek_rtsx::init(OSDictionary *dictionary) {
 	Sinetek_rtsx_boot_arg_mimic_linux = (int) PE_parse_boot_argn("-rtsx_mimic_linux", &dummy, sizeof(dummy));
 	Sinetek_rtsx_boot_arg_no_adma = (int)PE_parse_boot_argn("-rtsx_no_adma", &dummy, sizeof(dummy));
 	PE_parse_boot_argn("rtsx_timeout_shift", &Sinetek_rtsx_boot_arg_timeout_shift, sizeof(Sinetek_rtsx_boot_arg_timeout_shift));
+	PE_parse_boot_argn("rtsx_sleep_wake_delay_ms", &Sinetek_rtsx_boot_arg_sleep_wake_delay_ms, sizeof(Sinetek_rtsx_boot_arg_sleep_wake_delay_ms));
 	UTL_LOG("ADMA %s", Sinetek_rtsx_boot_arg_no_adma ? "disabled" : "enabled");
 	UTL_LOG("Timeout shift: %d", Sinetek_rtsx_boot_arg_timeout_shift);
 	UTL_DEBUG_FUN("END");
@@ -319,16 +321,16 @@ IOReturn Sinetek_rtsx::setPowerState(unsigned long powerStateOrdinal, IOService 
 
 	switch (powerStateOrdinal) {
 		case kPowerStateSleep:
-			IOSleep(1000);
+			IOSleep(Sinetek_rtsx_boot_arg_sleep_wake_delay_ms);
 			// save state
 			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_SUSPEND);
-			IOSleep(1000);
+			IOSleep(Sinetek_rtsx_boot_arg_sleep_wake_delay_ms);
 			break;
 		case kPowerStateNormal:
-			IOSleep(1000);
+			IOSleep(Sinetek_rtsx_boot_arg_sleep_wake_delay_ms);
 			// re-initialize chip
 			rtsx_init(rtsx_softc_original_, 1);
-			IOSleep(1000);
+			IOSleep(Sinetek_rtsx_boot_arg_sleep_wake_delay_ms);
 			// restore state
 			rtsx_activate(&rtsx_softc_original_->sc_dev, DVACT_RESUME);
 			break;
