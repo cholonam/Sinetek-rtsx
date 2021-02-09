@@ -316,8 +316,7 @@ void Sinetek_rtsx::rtsx_pci_detach()
 // Many services (even logging) may not be available when this method is called.
 IOReturn Sinetek_rtsx::setPowerState(unsigned long powerStateOrdinal, IOService *policyMaker)
 {
-	auto previousState = this->getPowerState();
-	UTL_DEBUG_FUN("START (powerState: %u -> %u)", (unsigned) previousState, (unsigned) powerStateOrdinal);
+	UTL_DEBUG_FUN("START (powerState: %u -> %u)", (unsigned) this->getPowerState(), (unsigned) powerStateOrdinal);
 
 	switch (powerStateOrdinal) {
 		case kPowerStateSleep:

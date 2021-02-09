@@ -335,7 +335,7 @@ void read_task_impl_(void *_args)
 	IOByteCount sentBytes = 0;
 	int blocks = (int) args->block;
 	bus_dma_segment_t dma_segs[SDMMC_MAXNSEGS];
-	int               rsegs;
+	int               rsegs = 0;
 	u_char *          buf;
 
 	extern int Sinetek_rtsx_boot_arg_no_adma;
