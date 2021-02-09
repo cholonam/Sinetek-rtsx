@@ -37,3 +37,4 @@ build
 # Ignore kext itself
 Sinetek-rtsx.kext/
 DerivedData/
+.DS_Store
