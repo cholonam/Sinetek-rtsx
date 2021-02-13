@@ -3,6 +3,7 @@
 #include <IOKit/IOLib.h>
 #include <IOKit/storage/IOBlockStorageDevice.h>
 #include <IOKit/storage/IOBlockStorageDriver.h> // kIOMediaStateOffline
+#include <IOKit/storage/IOMedia.h> // kIOMediaIconKey
 #include <IOKit/IOMemoryDescriptor.h>
 
 #define UTL_THIS_CLASS "SDDisk::"
@@ -59,6 +60,20 @@ static void dma_free(void *kva, bus_size_t bufSize, bus_dma_segment_t *dma_segs,
 	bus_dmamem_free(gBusDmaTag, dma_segs, rsegs);
 }
 
+static void setIcon(IOService *sddiskIOService)
+{
+	OSDictionary *dictionary = OSDictionary::withCapacity(2);
+	OSString *identifier = OSString::withCString("com.apple.iokit.IOSCSIArchitectureModelFamily");
+	OSString *resourceFile = OSString::withCString("SD.icns");
+
+	if (dictionary && identifier && resourceFile) {
+		dictionary->setObject("CFBundleIdentifier", identifier);
+		dictionary->setObject("IOBundleResourceFile", resourceFile);
+	}
+
+	sddiskIOService->setProperty(kIOMediaIconKey, dictionary);
+}
+
 } // namespace
 
 bool SDDisk::init(struct sdmmc_softc *sc_sdmmc, OSDictionary* properties)
@@ -74,6 +89,7 @@ bool SDDisk::init(struct sdmmc_softc *sc_sdmmc, OSDictionary* properties)
 	debugRetainReleaseCount = 0;
 #endif
 
+	setIcon(this);
 
 	UTL_DEBUG_FUN("END");
 	return true;
