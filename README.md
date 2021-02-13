@@ -67,6 +67,5 @@ From higher to lower priority:
  - Troubleshoot why after a soft reboot, for chip 525A version B, chip version is detected as 'A'.
  - Use command gate instead of two workloops? Is it even possible?
  - Prevent namespace pollution (OpenBSD functions pollute the namespace and may cause collisions).
- - Use macOS SD-Card icon instead of the generic one.
 
 Pull requests are very welcome, specially to add support for chips other than RTS525A (the only chip I can test).
