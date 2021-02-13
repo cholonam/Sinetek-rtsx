@@ -12,10 +12,11 @@ It took me a while to understand the code. Some problems I found:
 
 ### Chips known to work
 
-| Chip No. | Notes                                                                                                                  |
-|----------|------------------------------------------------------------------------------------------------------------------------|
-| RTS5227  | Seems to work fine with sleep disabled. Adding boot parameter `rtsx_sleep_wake_delay_ms=1000 may help with sleep/wake. |
-| RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized.         |
+| Chip No. | Notes                                                                                                                                |
+|----------|--------------------------------------------------------------------------------------------------------------------------------------|
+| RTS5227  | Seems to work fine with sleep disabled. Adding boot parameter `rtsx_sleep_wake_delay_ms=1000` may help with sleep/wake. (See PR #18) |
+| RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized.                       |
+| RTS5287  | Working fine with sleep disabled. Not waking from sleep. (See issue #19)                                                             |
 
  _If you have a chip other than RTS525A and this kext is working for you, please let me know and I will update this table._
 
@@ -57,7 +58,7 @@ The code allows some customization by defining/undefining certain preprocessor m
    1. Some user-level program (HWMonitor is one of them) may hold references to a class in this kext that would prevent unloading. Try terminating these programs.
 
 1. Sleep/Wake Issues
-   The card is unmounted on sleep and remounted on wake. This is the expected behavior and it should work at least for chip RTS525A. For other chips, the card may become unreadable upon wake.
+   The card is unmounted on sleep and remounted on wake. This is the expected behavior and it should work at least for chip RTS525A. For other chips, the card may become unreadable upon wake. If adding the `rtsx_sleep_wake_delay_ms=1000` boot parameter solves your sleep/wake issues, and your chip *is not* RTS5227, please let me know so that I can update the above table.
 
 ## To Do
 
