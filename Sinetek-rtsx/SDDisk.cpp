@@ -72,6 +72,10 @@ static void setIcon(IOService *sddiskIOService)
 	}
 
 	sddiskIOService->setProperty(kIOMediaIconKey, dictionary);
+	
+	UTL_SAFE_RELEASE_NULL(resourceFile);
+	UTL_SAFE_RELEASE_NULL(identifier);
+	UTL_SAFE_RELEASE_NULL(dictionary);
 }
 
 } // namespace
