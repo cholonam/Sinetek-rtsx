@@ -15,9 +15,9 @@ It took me a while to understand the code. Some problems I found:
 | Chip No. | Notes                                                                                                                                |
 |----------|--------------------------------------------------------------------------------------------------------------------------------------|
 | RTS5227  | Seems to work fine with sleep disabled. Adding boot parameter `rtsx_sleep_wake_delay_ms=1000` may help with sleep/wake. (See PR #18) |
+| RTS522A  | Working fine with sleep disabled. Not working after sleep and wakes up sleep constantly                                              |
 | RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized.                       |
 | RTS5287  | Working fine with sleep disabled. Not waking from sleep. (See issue #19)                                                             |
-| RTS522A  | Working fine with skeeo disabled. Not working after sleep and wakes up sleep constantly                                              |
 
  _If you have a chip other than RTS525A and this kext is working for you, please let me know and I will update this table._
 
