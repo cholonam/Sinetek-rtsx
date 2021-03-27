@@ -15,7 +15,7 @@ It took me a while to understand the code. Some problems I found:
 | Chip No. | Notes                                                                                                                                           |
 |----------|-------------------------------------------------------------------------------------------------------------------------------------------------|
 | RTS5227  | Seems to work fine with sleep disabled. Adding boot parameter `rtsx_sleep_wake_delay_ms=1000` may help with sleep/wake. (See PR #18)            |
-| RTS522A  | <s>Working fine with sleep disabled. Not working after sleep and wakes up sleep constantly.</s><br/>Working with sleep enabled. (See issue #27) |
+| RTS522A  | <s>Working fine with sleep disabled. Not working after sleep and wakes up sleep constantly.</s><br/>Adding boot parameter `rtsx_sleep_wake_delay_ms=1000` makes it work with sleep enabled. (See issue #27) |
 | RTS525A  | Working fine with sleep disabled. Enabling sleep may make the kext unstable. Some cards may not be recognized.                                  |
 | RTS5287  | Working fine with sleep disabled. Not waking from sleep. (See issue #19)                                                                        |
 
